@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Xiaozhi Device Control - Cài đặt và kết nối thiết bị">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Xiaozhi Control">
+    
+    <title>Xiaozhi Device Control</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            color: #333;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .qr-scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #video {
+            width: 100%;
+            display: block;
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        .qr-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+        
+        .qr-overlay::before,
+        .qr-overlay::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #667eea;
+        }
+        
+        .qr-overlay::before {
+            top: -3px;
+            left: -3px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .qr-overlay::after {
+            bottom: -3px;
+            right: -3px;
+            border-left: none;
+            border-top: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .device-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .device-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .device-info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .device-info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .device-info-value {
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .install-banner-content {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .install-banner-text {
+            flex: 1;
+        }
+        
+        .install-banner-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .install-banner-desc {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .install-banner-btn {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Xiaozhi Device Control</h1>
+        <p class="subtitle">Cài đặt và kết nối thiết bị của bạn</p>
+        
+        <!-- Status Messages -->
+        <div id="status" class="status hidden"></div>
+        
+        <!-- QR Scanner Section -->
+        <div class="section">
+            <div class="section-title">
+                <span>📷</span>
+                <span>Quét QR Code</span>
+            </div>
+            <div class="qr-scanner-container" id="scannerContainer">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+                <div class="qr-overlay"></div>
+            </div>
+            <button class="btn btn-primary" id="startScanBtn" onclick="startScan()">
+                <span>▶️</span>
+                <span>Bắt đầu quét</span>
+            </button>
+            <button class="btn btn-secondary hidden" id="stopScanBtn" onclick="stopScan()">
+                <span>⏹️</span>
+                <span>Dừng quét</span>
+            </button>
+        </div>
+        
+        <!-- Device Info Section -->
+        <div class="section hidden" id="deviceInfoSection">
+            <div class="section-title">
+                <span>📡</span>
+                <span>Thông tin thiết bị</span>
+            </div>
+            <div class="device-info" id="deviceInfo"></div>
+            <button class="btn btn-primary" id="connectBtn" onclick="connectToDevice()">
+                <span>🔗</span>
+                <span>Kết nối đến thiết bị</span>
+            </button>
+        </div>
+        
+        <!-- Install PWA Section -->
+        <div class="section">
+            <div class="section-title">
+                <span>📲</span>
+                <span>Cài đặt ứng dụng</span>
+            </div>
+            <button class="btn btn-primary" id="installBtn" onclick="installPWA()" disabled>
+                <span>⬇️</span>
+                <span>Cài đặt ứng dụng</span>
+            </button>
+            <p style="font-size: 12px; color: #666; text-align: center; margin-top: 10px;">
+                Cài đặt để truy cập nhanh và sử dụng offline
+            </p>
+        </div>
+    </div>
+    
+    <!-- PWA Install Banner -->
+    <div class="install-banner" id="installBanner">
+        <div class="install-banner-content">
+            <div class="install-banner-text">
+                <div class="install-banner-title">📱 Cài đặt ứng dụng</div>
+                <div class="install-banner-desc">Cài đặt để truy cập nhanh hơn</div>
+            </div>
+            <button class="install-banner-btn" onclick="installPWA()">Cài đặt</button>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script>
+        let video = null;
+        let canvas = null;
+        let context = null;
+        let scanning = false;
+        let scanInterval = null;
+        let deferredPrompt = null;
+        let deviceData = null;
+        
+        // Initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            video = document.getElementById('video');
+            canvas = document.getElementById('canvas');
+            context = canvas.getContext('2d');
+            
+            // Check if PWA is already installed
+            if (isPWAInstalled()) {
+                document.getElementById('installBtn').textContent = '✅ Đã cài đặt';
+                document.getElementById('installBtn').disabled = true;
+            }
+            
+            // Listen for beforeinstallprompt event
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('installBtn').disabled = false;
+                showInstallBanner();
+            });
+            
+            // Listen for appinstalled event
+            window.addEventListener('appinstalled', function() {
+                console.log('PWA installed successfully');
+                document.getElementById('installBtn').textContent = '✅ Đã cài đặt';
+                document.getElementById('installBtn').disabled = true;
+                hideInstallBanner();
+                showStatus('Ứng dụng đã được cài đặt thành công!', 'success');
+            });
+            
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            }
+        });
+        
+        // Check if PWA is installed
+        function isPWAInstalled() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true ||
+                   document.referrer.includes('android-app://');
+        }
+        
+        // Start QR code scanning
+        async function startScan() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment' // Use back camera on mobile
+                    }
+                });
+                
+                video.srcObject = stream;
+                video.setAttribute('playsinline', true);
+                video.play();
+                
+                scanning = true;
+                document.getElementById('startScanBtn').classList.add('hidden');
+                document.getElementById('stopScanBtn').classList.remove('hidden');
+                
+                scanInterval = setInterval(scanQRCode, 100);
+                showStatus('Đang quét QR code...', 'info');
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showStatus('Không thể truy cập camera. Vui lòng cấp quyền truy cập camera.', 'error');
+            }
+        }
+        
+        // Stop QR code scanning
+        function stopScan() {
+            scanning = false;
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            document.getElementById('startScanBtn').classList.remove('hidden');
+            document.getElementById('stopScanBtn').classList.add('hidden');
+        }
+        
+        // Scan QR code
+        function scanQRCode() {
+            if (!scanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
+                return;
+            }
+            
+            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code) {
+                console.log('QR Code detected:', code.data);
+                handleQRCodeData(code.data);
+                stopScan();
+            }
+        }
+        
+        // Handle QR code data
+        function handleQRCodeData(data) {
+            try {
+                // Try to parse as URL
+                const url = new URL(data);
+                
+                // Extract device information from URL
+                deviceData = {
+                    ip: url.hostname,
+                    port: url.port || '80',
+                    protocol: url.protocol.replace(':', ''),
+                    fullUrl: url.href
+                };
+                
+                displayDeviceInfo(deviceData);
+                showStatus('Đã quét QR code thành công!', 'success');
+            } catch (error) {
+                // If not a URL, try to parse as JSON
+                try {
+                    deviceData = JSON.parse(data);
+                    displayDeviceInfo(deviceData);
+                    showStatus('Đã quét QR code thành công!', 'success');
+                } catch (parseError) {
+                    showStatus('QR code không hợp lệ. Vui lòng quét lại.', 'error');
+                }
+            }
+        }
+        
+        // Display device information
+        function displayDeviceInfo(data) {
+            const deviceInfo = document.getElementById('deviceInfo');
+            deviceInfo.innerHTML = '';
+            
+            if (data.ip) {
+                deviceInfo.innerHTML += `
+                    <div class="device-info-item">
+                        <span class="device-info-label">IP Address:</span>
+                        <span class="device-info-value">${data.ip}</span>
+                    </div>
+                `;
+            }
+            
+            if (data.port) {
+                deviceInfo.innerHTML += `
+                    <div class="device-info-item">
+                        <span class="device-info-label">Port:</span>
+                        <span class="device-info-value">${data.port}</span>
+                    </div>
+                `;
+            }
+            
+            if (data.fullUrl) {
+                deviceInfo.innerHTML += `
+                    <div class="device-info-item">
+                        <span class="device-info-label">URL:</span>
+                        <span class="device-info-value">${data.fullUrl}</span>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('deviceInfoSection').classList.remove('hidden');
+        }
+        
+        // Connect to device
+        function connectToDevice() {
+            if (!deviceData) {
+                showStatus('Chưa có thông tin thiết bị. Vui lòng quét QR code trước.', 'error');
+                return;
+            }
+            
+            const url = deviceData.fullUrl || `http://${deviceData.ip}:${deviceData.port || '80'}`;
+            
+            // Open device control page in new window/tab
+            window.open(url, '_blank');
+            
+            // If PWA is installed, we can also navigate directly
+            if (isPWAInstalled()) {
+                window.location.href = url;
+            }
+            
+            showStatus('Đang kết nối đến thiết bị...', 'info');
+        }
+        
+        // Install PWA
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(function(choiceResult) {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                        hideInstallBanner();
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                showStatus('Trình duyệt không hỗ trợ cài đặt tự động. Vui lòng cài đặt thủ công từ menu trình duyệt.', 'info');
+            }
+        }
+        
+        // Show install banner
+        function showInstallBanner() {
+            if (!isPWAInstalled() && !localStorage.getItem('pwa-banner-dismissed')) {
+                setTimeout(function() {
+                    document.getElementById('installBanner').style.display = 'block';
+                }, 3000);
+            }
+        }
+        
+        // Hide install banner
+        function hideInstallBanner() {
+            document.getElementById('installBanner').style.display = 'none';
+            localStorage.setItem('pwa-banner-dismissed', 'true');
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+            statusEl.classList.remove('hidden');
+            
+            if (type === 'success') {
+                setTimeout(function() {
+                    statusEl.classList.add('hidden');
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
+
