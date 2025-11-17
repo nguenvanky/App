@@ -1,7 +1,7 @@
 // Service Worker for Xiaozhi Device Control PWA
 const CACHE_NAME = 'xiaozhi-control-v1';
 const urlsToCache = [
-  '/',
+  '/App',
   '/manifest.json',
   '/favicon.ico',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'
@@ -54,4 +54,5 @@ self.addEventListener('activate', function(event) {
     })
   );
 });
+
 
