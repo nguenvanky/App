@@ -2,8 +2,8 @@
   "name": "Xiaozhi Device Control",
   "short_name": "Xiaozhi",
   "description": "Cài đặt và kết nối thiết bị Xiaozhi",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/App/",
+  "scope": "/App/",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
@@ -38,4 +38,5 @@
     }
   ]
 }
+
 
