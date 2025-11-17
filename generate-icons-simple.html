@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Icon Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 { color: #667eea; margin-bottom: 30px; }
+        .preview { display: flex; gap: 30px; justify-content: center; margin: 30px 0; flex-wrap: wrap; }
+        canvas { border: 3px solid #ddd; border-radius: 15px; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .info { background: #f0f0f0; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Tạo Icon PWA</h1>
+        <div class="info">
+            <strong>Hướng dẫn:</strong><br>
+            1. Nhấn "Tạo Icon"<br>
+            2. Nhấn "Tải 192x192" và "Tải 512x512"<br>
+            3. Lưu 2 file vào thư mục pwa_installer/
+        </div>
+        <button onclick="createIcons()">🎨 Tạo Icon</button>
+        <div class="preview">
+            <div>
+                <h3>192x192</h3>
+                <canvas id="c192" width="192" height="192"></canvas><br>
+                <button onclick="save(192)">⬇️ Tải 192x192</button>
+            </div>
+            <div>
+                <h3>512x512</h3>
+                <canvas id="c512" width="512" height="512"></canvas><br>
+                <button onclick="save(512)">⬇️ Tải 512x512</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function createIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background
+            const grad = ctx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, '#667eea');
+            grad.addColorStop(1, '#764ba2');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // White icon
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size * 0.06;
+            
+            const cx = size / 2, cy = size / 2, r = size * 0.25;
+            
+            // Circle
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // X inside
+            const s = r * 0.6;
+            ctx.lineWidth = size * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(cx - s, cy - s);
+            ctx.lineTo(cx + s, cy + s);
+            ctx.moveTo(cx + s, cy - s);
+            ctx.lineTo(cx - s, cy + s);
+            ctx.stroke();
+        }
+        
+        function createIcons() {
+            createIcon(document.getElementById('c192'), 192);
+            createIcon(document.getElementById('c512'), 512);
+        }
+        
+        function save(size) {
+            const canvas = document.getElementById(`c${size}`);
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+        
+        window.onload = createIcons;
+    </script>
+</body>
+</html>
+

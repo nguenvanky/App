@@ -14,6 +14,10 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <style>
         * {
             margin: 0;
@@ -224,6 +228,50 @@
             display: none;
         }
         
+        .device-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .device-viewer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .device-viewer-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .device-viewer-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .device-viewer-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+        
         .loading {
             text-align: center;
             padding: 20px;
@@ -339,14 +387,23 @@
                 <span>📲</span>
                 <span>Cài đặt ứng dụng</span>
             </div>
-            <button class="btn btn-primary" id="installBtn" onclick="installPWA()" disabled>
+            <button class="btn btn-primary" id="installBtn" onclick="installPWA()">
                 <span>⬇️</span>
-                <span>Cài đặt ứng dụng</span>
+                <span id="installBtnText">Cài đặt ứng dụng</span>
             </button>
             <p style="font-size: 12px; color: #666; text-align: center; margin-top: 10px;">
                 Cài đặt để truy cập nhanh và sử dụng offline
             </p>
         </div>
+    </div>
+    
+    <!-- Device Viewer (iframe for ESP32 content) -->
+    <div class="device-viewer" id="deviceViewer">
+        <div class="device-viewer-header">
+            <div class="device-viewer-title">Thiết bị điều khiển</div>
+            <button class="device-viewer-close" onclick="closeDeviceViewer()">✕ Đóng</button>
+        </div>
+        <iframe id="deviceIframe" class="device-viewer-iframe" allow="camera; microphone; geolocation"></iframe>
     </div>
     
     <!-- PWA Install Banner -->
@@ -378,38 +435,64 @@
             
             // Check if PWA is already installed
             if (isPWAInstalled()) {
-                document.getElementById('installBtn').textContent = '✅ Đã cài đặt';
+                document.getElementById('installBtnText').textContent = '✅ Đã cài đặt';
                 document.getElementById('installBtn').disabled = true;
+            } else {
+                // Check if install prompt is available
+                checkInstallPrompt();
             }
             
-            // Listen for beforeinstallprompt event
+            // Listen for beforeinstallprompt event (Android/Chrome)
             window.addEventListener('beforeinstallprompt', function(e) {
+                console.log('beforeinstallprompt event fired');
                 e.preventDefault();
                 deferredPrompt = e;
                 document.getElementById('installBtn').disabled = false;
+                document.getElementById('installBtnText').textContent = 'Cài đặt ứng dụng';
                 showInstallBanner();
             });
             
             // Listen for appinstalled event
-            window.addEventListener('appinstalled', function() {
-                console.log('PWA installed successfully');
-                document.getElementById('installBtn').textContent = '✅ Đã cài đặt';
+            window.addEventListener('appinstalled', function(evt) {
+                console.log('PWA installed successfully', evt);
+                document.getElementById('installBtnText').textContent = '✅ Đã cài đặt';
                 document.getElementById('installBtn').disabled = true;
                 hideInstallBanner();
                 showStatus('Ứng dụng đã được cài đặt thành công!', 'success');
+                deferredPrompt = null;
             });
             
             // Register service worker
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js')
+                navigator.serviceWorker.register('service-worker.js', { scope: '/' })
                     .then(function(registration) {
                         console.log('Service Worker registered:', registration.scope);
+                        console.log('Service Worker state:', registration.active ? 'active' : 'installing');
                     })
                     .catch(function(error) {
                         console.error('Service Worker registration failed:', error);
+                        showStatus('Lỗi đăng ký Service Worker: ' + error.message, 'error');
                     });
+            } else {
+                console.warn('Service Worker not supported');
             }
         });
+        
+        // Check if install prompt is available (for debugging)
+        function checkInstallPrompt() {
+            // On iOS, check if already added to home screen
+            if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                if (window.navigator.standalone) {
+                    document.getElementById('installBtnText').textContent = '✅ Đã cài đặt';
+                    document.getElementById('installBtn').disabled = true;
+                } else {
+                    document.getElementById('installBtnText').textContent = 'Hướng dẫn cài đặt (iOS)';
+                }
+            } else {
+                // For other browsers, show install button
+                document.getElementById('installBtnText').textContent = 'Cài đặt ứng dụng';
+            }
+        }
         
         // Check if PWA is installed
         function isPWAInstalled() {
@@ -543,7 +626,7 @@
             document.getElementById('deviceInfoSection').classList.remove('hidden');
         }
         
-        // Connect to device
+        // Connect to device - Load ESP32 content into iframe
         function connectToDevice() {
             if (!deviceData) {
                 showStatus('Chưa có thông tin thiết bị. Vui lòng quét QR code trước.', 'error');
@@ -552,32 +635,79 @@
             
             const url = deviceData.fullUrl || `http://${deviceData.ip}:${deviceData.port || '80'}`;
             
-            // Open device control page in new window/tab
-            window.open(url, '_blank');
+            // Show device viewer
+            const deviceViewer = document.getElementById('deviceViewer');
+            const deviceIframe = document.getElementById('deviceIframe');
             
-            // If PWA is installed, we can also navigate directly
-            if (isPWAInstalled()) {
-                window.location.href = url;
-            }
+            // Set iframe source
+            deviceIframe.src = url;
+            deviceViewer.style.display = 'flex';
             
-            showStatus('Đang kết nối đến thiết bị...', 'info');
+            // Hide main container
+            document.querySelector('.container').style.display = 'none';
+            
+            showStatus('Đang tải trang điều khiển...', 'info');
+            
+            // Handle iframe load
+            deviceIframe.onload = function() {
+                console.log('Device page loaded successfully');
+                showStatus('Đã kết nối đến thiết bị!', 'success');
+            };
+            
+            deviceIframe.onerror = function() {
+                console.error('Failed to load device page');
+                showStatus('Không thể tải trang điều khiển. Kiểm tra kết nối mạng.', 'error');
+            };
+        }
+        
+        // Close device viewer
+        function closeDeviceViewer() {
+            const deviceViewer = document.getElementById('deviceViewer');
+            const deviceIframe = document.getElementById('deviceIframe');
+            
+            deviceViewer.style.display = 'none';
+            deviceIframe.src = '';
+            
+            // Show main container
+            document.querySelector('.container').style.display = 'block';
         }
         
         // Install PWA
         function installPWA() {
+            console.log('installPWA called, deferredPrompt:', deferredPrompt ? 'available' : 'null');
+            
+            if (isPWAInstalled()) {
+                showStatus('Ứng dụng đã được cài đặt rồi!', 'info');
+                return;
+            }
+            
             if (deferredPrompt) {
+                console.log('Triggering install prompt');
                 deferredPrompt.prompt();
+                
                 deferredPrompt.userChoice.then(function(choiceResult) {
+                    console.log('User choice:', choiceResult.outcome);
                     if (choiceResult.outcome === 'accepted') {
                         console.log('User accepted the install prompt');
+                        showStatus('Đang cài đặt ứng dụng...', 'info');
                         hideInstallBanner();
                     } else {
                         console.log('User dismissed the install prompt');
+                        showStatus('Cài đặt đã bị hủy.', 'info');
                     }
                     deferredPrompt = null;
+                }).catch(function(error) {
+                    console.error('Error in install prompt:', error);
+                    showStatus('Lỗi khi cài đặt: ' + error.message, 'error');
                 });
             } else {
-                showStatus('Trình duyệt không hỗ trợ cài đặt tự động. Vui lòng cài đặt thủ công từ menu trình duyệt.', 'info');
+                // For iOS/Safari
+                if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                    showStatus('Để cài đặt trên iOS:\n\n1. Nhấn nút Share (mũi tên lên)\n2. Chọn "Add to Home Screen"\n3. Nhấn "Add"', 'info');
+                } else {
+                    // For other browsers
+                    showStatus('Trình duyệt chưa sẵn sàng cài đặt. Vui lòng:\n\n📱 Android/Chrome: Menu (⋮) → "Install app"\n💻 Desktop: Biểu tượng (+) trên thanh địa chỉ', 'info');
+                }
             }
         }
         
