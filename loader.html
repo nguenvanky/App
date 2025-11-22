@@ -118,44 +118,82 @@
                     `Loading ${pageName}... (Retry ${retryAttempt}/${MAX_RETRIES})`;
             }
             
+            console.log(`[Loader] Attempting to load from hosting (attempt ${retryAttempt + 1}/${MAX_RETRIES}): ${htmlUrl}`);
+            
             // Try with cache first, then without cache
             const cacheMode = retryAttempt === 0 ? 'default' : 'no-cache';
             
             fetchWithTimeout(htmlUrl, {
+                method: 'GET',
+                mode: 'cors',  // Explicitly set CORS mode
                 cache: cacheMode,
                 headers: {
                     'Cache-Control': retryAttempt === 0 ? 'max-age=3600' : 'no-cache'
                 }
             }, TIMEOUT_MS)
             .then(response => {
+                console.log(`[Loader] Response received: status=${response.status}, ok=${response.ok}, type=${response.type}`);
+                
                 if (!response.ok) {
                     // 404 or other HTTP errors - should fallback
                     if (response.status === 404) {
-                        throw new Error('Not Found');
+                        console.error(`[Loader] 404 Not Found - will fallback to ESP32`);
+                        throw new Error('Not Found (404)');
                     }
                     // Other HTTP errors - retry
+                    console.warn(`[Loader] HTTP error ${response.status} - will retry`);
                     throw new Error(`HTTP ${response.status}`);
                 }
+                
+                console.log(`[Loader] Response OK, reading text...`);
                 return response.text();
             })
             .then(html => {
+                console.log(`[Loader] Successfully loaded HTML (${html.length} bytes), replacing document...`);
                 // Success - replace document
                 document.open();
                 document.write(html);
                 document.close();
             })
             .catch(error => {
-                console.error(`Failed to load from hosting (attempt ${retryAttempt + 1}):`, error);
+                const errorMsg = error.message || error.toString();
+                const errorType = error.name || 'Unknown';
+                console.error(`[Loader] Failed to load from hosting (attempt ${retryAttempt + 1}/${MAX_RETRIES}):`, {
+                    error: errorMsg,
+                    type: errorType,
+                    url: htmlUrl
+                });
                 
-                // Retry if we haven't exceeded max retries
-                if (retryAttempt < MAX_RETRIES - 1) {
+                // Check if it's a CORS or network error that we should retry
+                const isRetryableError = 
+                    errorMsg.includes('Timeout') ||
+                    errorMsg.includes('Failed to fetch') ||
+                    errorMsg.includes('NetworkError') ||
+                    errorMsg.includes('TypeError') ||
+                    errorType === 'TypeError' ||
+                    errorType === 'NetworkError';
+                
+                // Don't retry for 404 - fallback immediately
+                if (errorMsg.includes('Not Found') || errorMsg.includes('404')) {
+                    console.warn(`[Loader] 404 error - falling back to ESP32 immediately`);
+                    loadFromESP32();
+                    return;
+                }
+                
+                // Retry if we haven't exceeded max retries and error is retryable
+                if (retryAttempt < MAX_RETRIES - 1 && isRetryableError) {
+                    console.log(`[Loader] Retryable error detected, will retry in ${RETRY_DELAY_MS}ms...`);
                     // Wait before retry
                     setTimeout(() => {
                         loadFromHosting(retryAttempt + 1);
                     }, RETRY_DELAY_MS);
                 } else {
-                    // All retries failed - fallback to ESP32
-                    console.warn('All retries failed, falling back to ESP32');
+                    // All retries failed or non-retryable error - fallback to ESP32
+                    if (retryAttempt >= MAX_RETRIES - 1) {
+                        console.warn(`[Loader] All ${MAX_RETRIES} retries exhausted, falling back to ESP32`);
+                    } else {
+                        console.warn(`[Loader] Non-retryable error, falling back to ESP32: ${errorMsg}`);
+                    }
                     loadFromESP32();
                 }
             });
