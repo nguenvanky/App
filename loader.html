@@ -74,18 +74,18 @@
         
         // Xác định trang cần load dựa trên pathname
         const path = window.location.pathname;
-        let htmlUrl, fallbackUrl, pageName;
+        let jsUrl, fallbackUrl, pageName;
         
         if (path.includes('/otto') || path.includes('/control')) {
-            htmlUrl = 'https://nguenvanky.github.io/App/pages/otto.html';
+            jsUrl = 'https://nguenvanky.github.io/App/pages/otto.js';
             fallbackUrl = `${ESP32_BASE}/otto-fallback`;
             pageName = 'Otto Control';
         } else if (path.includes('/servo') || path.includes('/servo-calibration')) {
-            htmlUrl = 'https://nguenvanky.github.io/App/pages/servo.html';
+            jsUrl = 'https://nguenvanky.github.io/App/pages/servo.js';
             fallbackUrl = `${ESP32_BASE}/servo-fallback`;
             pageName = 'Servo Calibration';
         } else {
-            htmlUrl = 'https://nguenvanky.github.io/App/pages/settings.html';
+            jsUrl = 'https://nguenvanky.github.io/App/pages/settings.js';
             fallbackUrl = `${ESP32_BASE}/settings-fallback`;
             pageName = 'Settings';
         }
@@ -118,12 +118,12 @@
                     `Loading ${pageName}... (Retry ${retryAttempt}/${MAX_RETRIES})`;
             }
             
-            console.log(`[Loader] Attempting to load from hosting (attempt ${retryAttempt + 1}/${MAX_RETRIES}): ${htmlUrl}`);
+            console.log(`[Loader] Attempting to load from hosting (attempt ${retryAttempt + 1}/${MAX_RETRIES}): ${jsUrl}`);
             
             // Try with cache first, then without cache
             const cacheMode = retryAttempt === 0 ? 'default' : 'no-cache';
             
-            fetchWithTimeout(htmlUrl, {
+            fetchWithTimeout(jsUrl, {
                 method: 'GET',
                 mode: 'cors',  // Explicitly set CORS mode
                 cache: cacheMode,
@@ -161,7 +161,7 @@
                 console.error(`[Loader] Failed to load from hosting (attempt ${retryAttempt + 1}/${MAX_RETRIES}):`, {
                     error: errorMsg,
                     type: errorType,
-                    url: htmlUrl
+                    url: jsUrl
                 });
                 
                 // Check if it's a CORS or network error that we should retry
