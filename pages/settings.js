@@ -2970,23 +2970,7 @@
             console.log('[JS Injector] Successfully injected Settings HTML');
         } catch (error) {
             console.error('[JS Injector] Failed to inject HTML:', error);
-            // Fallback: try to load from ESP32
-            const ESP32_IP = window.location.hostname;
-            const ESP32_PORT = window.location.port || '80';
-            const ESP32_BASE = `http://${ESP32_IP}:${ESP32_PORT}`;
-            
-            let fallbackUrl;
-            const path = window.location.pathname;
-            if (path.includes('/otto') || path.includes('/control')) {
-                fallbackUrl = `${ESP32_BASE}/otto-fallback`;
-            } else if (path.includes('/servo') || path.includes('/servo-calibration')) {
-                fallbackUrl = `${ESP32_BASE}/servo-fallback`;
-            } else {
-                fallbackUrl = `${ESP32_BASE}/settings-fallback`;
-            }
-            
-            console.log('[JS Injector] Loading fallback from:', fallbackUrl);
-            window.location.href = fallbackUrl;
+            document.body.innerHTML = '<div style="text-align:center;padding:50px;font-family:Arial"><h1>⚠️ Lỗi tải trang</h1><p>Không thể tải nội dung. Vui lòng kiểm tra kết nối mạng và thử lại.</p><p><a href="/">← Quay lại</a></p></div>';
         }
     }
     
