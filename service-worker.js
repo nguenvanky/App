@@ -1,10 +1,12 @@
 // Service Worker for Xiaozhi Device Control PWA
-const CACHE_NAME = 'xiaozhi-control-v1';
+const CACHE_NAME = 'xiaozhi-control-v2';
 const urlsToCache = [
   '/',
+  '/otto',
+  '/servo-calibration',
+  '/api/otto/status',
   '/manifest.json',
-  '/favicon.ico',
-  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'
+  '/favicon.ico'
 ];
 
 // Install event - cache resources
@@ -14,11 +16,6 @@ self.addEventListener('install', function(event) {
       .then(function(cache) {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
-      })
-      .catch(function(error) {
-        console.error('Cache addAll failed:', error);
-        // Continue even if some resources fail to cache
-        return Promise.resolve();
       })
   );
 });
@@ -32,7 +29,15 @@ self.addEventListener('fetch', function(event) {
         return response || fetch(event.request).catch(function() {
           // If network fails and no cache, return offline page
           if (event.request.destination === 'document') {
-            return caches.match('/');
+            // Try to return cached page based on URL
+            const url = new URL(event.request.url);
+            if (url.pathname.startsWith('/otto')) {
+              return caches.match('/otto');
+            } else if (url.pathname.startsWith('/servo-calibration')) {
+              return caches.match('/servo-calibration');
+            } else {
+              return caches.match('/');
+            }
           }
         });
       })
@@ -54,7 +59,4 @@ self.addEventListener('activate', function(event) {
     })
   );
 });
-
-
-
 
