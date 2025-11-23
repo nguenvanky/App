@@ -1,0 +1,2481 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otto Robot Control</title>
+    <!-- Load CSS from external -->
+    <link rel="stylesheet" href="https://nguenvanky.github.io/App/styles/otto.min.css?v=1.0.0" 
+          onerror="loadFallbackCSS('otto')">
+    <!-- Fallback CSS (minimal inline for offline mode) -->
+    <noscript>
+        <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .status {
+            text-align: center;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .status.idle { background: #d4edda; color: #155724; }
+        .status.moving { background: #fff3cd; color: #856404; }
+        .control-section {
+            margin-bottom: 20px;
+        }
+        .portal-music-box {
+            border: 1px dashed #cbd5f5;
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .portal-music-status {
+            font-size: 13px;
+            color: #4c51bf;
+        }
+        .portal-music-status.error {
+            color: #c53030;
+        }
+        .portal-music-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .portal-music-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .portal-music-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+        }
+        .portal-music-meta strong {
+            color: #2d3748;
+        }
+        .portal-music-select {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .portal-music-select:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102,126,234,0.3);
+        }
+        .portal-music-select:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .portal-radio-box {
+            border: 1px dashed #cbd5f5;
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .portal-radio-status {
+            font-size: 13px;
+            color: #4c51bf;
+        }
+        .portal-radio-status.error {
+            color: #c53030;
+        }
+        .portal-radio-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .portal-radio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .portal-radio-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+        }
+        .portal-radio-meta strong {
+            color: #2d3748;
+        }
+        .portal-radio-select {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .portal-radio-select:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102,126,234,0.3);
+        }
+        .portal-radio-select:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .section-title {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        .volume-section {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-left: 4px solid #fb923c;
+            padding: 15px;
+            border-radius: 12px;
+        }
+        .volume-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .volume-slider input[type="range"] {
+            width: 100%;
+            accent-color: #fb923c;
+            height: 6px;
+        }
+        .volume-value {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #c2410c;
+        }
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 18px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #667eea;
+            color: white;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            min-height: 50px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .btn:active { 
+            transform: scale(0.95); 
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .btn.stop { background: #dc3545; }
+        .btn.stop:active { background: #c82333; }
+        .btn-direction {
+            grid-column: span 1;
+            padding: 25px 15px;
+            font-size: 20px;
+            min-height: 70px;
+            font-weight: 600;
+        }
+        .direction-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .direction-grid .btn:nth-child(2) { grid-column: 2; } /* Up */
+        .direction-grid .btn:nth-child(4) { grid-column: 1; } /* Left */
+        .direction-grid .btn:nth-child(5) { grid-column: 2; } /* Stop */
+        .direction-grid .btn:nth-child(6) { grid-column: 3; } /* Right */
+        .direction-grid .btn:nth-child(8) { grid-column: 2; } /* Down */
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+        }
+        .emoji-btn {
+            padding: 15px;
+            font-size: 28px;
+            background: #f8f9fa;
+            color: #333;
+            min-height: 70px;
+        }
+        .emoji-btn:active { 
+            background: #e9ecef; 
+            transform: scale(0.95);
+        }
+        .lang-selector {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        .pwa-install-fixed {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        .pwa-install-fixed button {
+            font-size: 12px;
+            padding: 10px 16px;
+            white-space: nowrap;
+        }
+        .pwa-install-fixed > div {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .menu-button {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        .menu-button:active {
+            transform: scale(0.9);
+            background: rgba(118, 75, 162, 0.95);
+        }
+        .menu-button.menu-ai {
+            top: 70px;
+            background: rgba(16, 185, 129, 0.95);
+        }
+        .menu-button.menu-ai:active {
+            background: rgba(5, 150, 105, 0.95);
+        }
+        .menu-panel {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            padding: 15px;
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .menu-panel.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .menu-item {
+            display: block;
+            padding: 12px 15px;
+            margin: 5px 0;
+            background: #f5f7fa;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .menu-item:active {
+            background: #667eea;
+            color: white;
+            transform: scale(0.98);
+        }
+        .menu-item:hover {
+            background: #e9ecef;
+        }
+        .lang-selector select {
+            padding: 6px 10px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            outline: none;
+        }
+        .lang-selector label {
+            display: none;
+        }
+        .voice-recording {
+            background: #dc3545 !important;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+        #voice-status.recording {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        #voice-status.processing {
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            .container {
+                padding: 12px;
+                border-radius: 12px;
+            }
+            h1 {
+                font-size: 20px;
+                margin-bottom: 12px;
+            }
+            .status {
+                padding: 10px;
+                font-size: 14px;
+                margin-bottom: 12px;
+            }
+            .control-section {
+                margin-bottom: 15px;
+            }
+            .section-title {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .portal-music-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .portal-music-select {
+                width: 100%;
+                text-align: center;
+            }
+            .volume-value {
+                font-size: 16px;
+            }
+            .btn {
+                padding: 16px 14px;
+                font-size: 14px;
+                min-height: 48px;
+                border-radius: 10px;
+            }
+            .btn-direction {
+                padding: 22px 12px;
+                font-size: 18px;
+                min-height: 65px;
+            }
+            .direction-grid {
+                gap: 10px;
+                padding: 8px;
+            }
+            .control-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 8px;
+            }
+            .emoji-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            .emoji-btn {
+                padding: 12px;
+                font-size: 24px;
+                min-height: 60px;
+            }
+            .lang-selector {
+                top: 5px;
+                right: 5px;
+                padding: 6px 10px;
+            }
+            .lang-selector select {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+        }
+        
+        /* PWA Fullscreen Mode */
+        @media (display-mode: standalone) {
+            body {
+                padding: 0;
+            }
+            .container {
+                border-radius: 0;
+                min-height: 100vh;
+                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            }
+        }
+        
+        /* Landscape Mode Optimization */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                padding: 8px;
+            }
+            .control-section {
+                margin-bottom: 10px;
+            }
+            .btn-direction {
+                padding: 18px 10px;
+                font-size: 16px;
+                min-height: 55px;
+            }
+        }
+        
+        /* Collapsible Sections for Mobile */
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            padding-right: 30px;
+        }
+        .collapsible::after {
+            content: ' ▼';
+            font-size: 12px;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.3s;
+        }
+        .collapsible.collapsed::after {
+            transform: translateY(-50%) rotate(-90deg);
+        }
+        .collapsible-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 1;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Prevent text selection on buttons */
+        .btn, .btn-direction, .emoji-btn {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Prevent double-tap zoom on buttons */
+        .btn, .btn-direction, .emoji-btn {
+            touch-action: manipulation;
+        }
+        
+        /* Better focus states for accessibility */
+        .btn:focus-visible {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
+        }
+        </style>
+    </noscript>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Otto Control">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+</head>
+<body>
+    <!-- Menu Button (Pin) ở góc trái -->
+    <button class="menu-button" onclick="toggleMenu()" title="Menu">📌</button>
+    <button class="menu-button menu-ai" onclick="forceAiStart()" title="Kích hoạt AI">⚡</button>
+    
+    <!-- Menu Panel -->
+    <div id="menu-panel" class="menu-panel">
+        <div class="menu-item" onclick="scanQRCode(); toggleMenu();">
+            📷 <span data-i18n="otto.scan_qr">Scan QR Code</span>
+        </div>
+        <div class="menu-item" onclick="showSavedDevices(); toggleMenu();">
+            📋 <span data-i18n="otto.saved_devices">Saved Devices</span>
+        </div>
+        <div class="menu-item" onclick="showQrCodeOnLCD(); toggleMenu();">
+            📺 <span data-i18n="otto.show_qr_lcd">Show QR on LCD</span>
+        </div>
+        <div class="menu-item" onclick="toggleVoiceControl(); toggleMenu();">
+            🎤 <span id="menu-voice-text" data-i18n="otto.voice_start">Start Voice Control</span>
+        </div>
+        <div class="menu-item" onclick="forceAiStart()">
+            ⚡ <span>Kích hoạt AI</span>
+        </div>
+        <div class="menu-item" onclick="window.location.href='/servo-calibration'">
+            ⚙️ <span data-i18n="otto.open_servo_calibration">Servo Calibration</span>
+        </div>
+        <div class="menu-item" onclick="window.location.href='/'">
+            ⚙️ <span>Settings</span>
+        </div>
+    </div>
+    
+    <!-- QR Scanner (Hidden, shown when needed) -->
+    <div id="qr-scanner" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 2000; max-width: 90%; max-height: 90%;">
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button onclick="stopQRScanner()" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 6px; cursor: pointer;">✕</button>
+        </div>
+        <video id="qr-video" style="width: 100%; max-width: 300px; border-radius: 8px; background: black;"></video>
+        <canvas id="qr-canvas" style="display: none;"></canvas>
+        <div id="qr-status" style="margin-top: 10px; font-size: 14px; color: #666; text-align: center;"></div>
+    </div>
+    
+    <!-- Voice Status (Floating) -->
+    <div id="voice-status" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(102, 126, 234, 0.95); color: white; padding: 12px 20px; border-radius: 25px; font-size: 14px; font-weight: bold; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></div>
+    <div id="voice-text" style="display: none; position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: white; padding: 10px 15px; border-radius: 8px; font-size: 13px; color: #333; max-width: 80%; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></div>
+    
+    <!-- Saved Devices List (Hidden, shown when needed) -->
+    <div id="saved-devices-list" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 2000; max-width: 90%; max-height: 80%; overflow-y: auto;">
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button onclick="document.getElementById('saved-devices-list').style.display='none'" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 6px; cursor: pointer;">✕</button>
+        </div>
+        <h3 style="margin-bottom: 15px;">📋 <span data-i18n="otto.saved_devices">Saved Devices</span></h3>
+        <div id="devices-container" style="text-align: left;"></div>
+    </div>
+    
+    <div class="container">
+        <div class="lang-selector">
+            <label for="language">🌐</label>
+            <select id="language" onchange="changeLanguage(this.value)">
+                <option value="zh-CN">中文 (简体)</option>
+                <option value="zh-TW">中文 (繁體)</option>
+                <option value="en-US">English</option>
+                <option value="ja-JP">日本語</option>
+                <option value="ko-KR">한국어</option>
+                <option value="vi-VN">Tiếng Việt</option>
+                <option value="th-TH">ไทย</option>
+            </select>
+        </div>
+        <h1 data-i18n="otto.title">🤖 Otto Robot Control</h1>
+        <div id="status" class="status idle" data-i18n="otto.status.idle">Status: Idle</div>
+        
+        <!-- Direction Control - Always Visible, Priority for Mobile -->
+        <div class="control-section" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #4caf50; padding: 15px; border-radius: 12px;">
+            <h2 class="section-title" data-i18n="otto.direction" style="color: #2e7d32; border-color: #4caf50;">🎮 Direction Control (Gamepad)</h2>
+            <div class="direction-grid">
+                <div></div>
+                <button class="btn btn-direction" onclick="sendCommand('walk_forward')" data-i18n="otto.forward" style="background: #4caf50;">⬆️ Forward</button>
+                <div></div>
+                <button class="btn btn-direction" onclick="sendCommand('turn_left')" data-i18n="otto.left" style="background: #2196f3;">⬅️ Left</button>
+                <button class="btn btn-direction btn stop" onclick="sendCommand('stop')" data-i18n="otto.stop">⏹️ Stop</button>
+                <button class="btn btn-direction" onclick="sendCommand('turn_right')" data-i18n="otto.right" style="background: #2196f3;">➡️ Right</button>
+                <div></div>
+                <button class="btn btn-direction" onclick="sendCommand('walk_backward')" data-i18n="otto.backward" style="background: #4caf50;">⬇️ Backward</button>
+                <div></div>
+            </div>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="control-section volume-section">
+            <h2 class="section-title collapsible collapsed" onclick="toggleSection(this)">🔊 Volume / Âm lượng</h2>
+            <div class="section-content collapsible-content collapsed">
+                <div class="volume-slider">
+                    <input type="range" id="volume-slider" min="0" max="100" value="70" oninput="handleVolumeInput(this.value)" aria-label="Volume slider">
+                    <div class="volume-value" id="volume-value">70%</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Collapsible Sections for Mobile -->
+        <div class="control-section">
+            <h2 class="section-title collapsible" onclick="toggleSection(this)" data-i18n="otto.dance">💃 Dance Moves</h2>
+            <div class="collapsible-content">
+                <div class="control-grid">
+                    <button class="btn" onclick="sendCommand('jump')" data-i18n="otto.jump">Jump</button>
+                    <button class="btn" onclick="sendCommand('swing')" data-i18n="otto.swing">Swing</button>
+                    <button class="btn" onclick="sendCommand('moonwalk')" data-i18n="otto.moonwalk">Moonwalk</button>
+                    <button class="btn" onclick="sendCommand('bend')" data-i18n="otto.bend">Bend</button>
+                    <button class="btn" onclick="sendCommand('shake_leg')" data-i18n="otto.shake_leg">Shake Leg</button>
+                    <button class="btn" onclick="sendCommand('updown')" data-i18n="otto.updown">Up & Down</button>
+                    <button class="btn" onclick="sendCommand('tiptoe_swing')" data-i18n="otto.tiptoe_swing">Tiptoe Swing</button>
+                    <button class="btn" onclick="sendCommand('jitter')" data-i18n="otto.jitter">Jitter</button>
+                    <button class="btn" onclick="sendCommand('ascending_turn')" data-i18n="otto.ascending_turn">Ascending Turn</button>
+                    <button class="btn" onclick="sendCommand('crusaito')" data-i18n="otto.crusaito">Crusaito</button>
+                    <button class="btn" onclick="sendCommand('flapping')" data-i18n="otto.flapping">Flapping</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h2 class="section-title collapsible" onclick="toggleSection(this)" data-i18n="otto.hands">👋 Hand Actions</h2>
+            <div class="collapsible-content">
+                <div class="control-grid">
+                    <button class="btn" onclick="sendCommand('hands_up')" data-i18n="otto.hands_up">Hands Up</button>
+                    <button class="btn" onclick="sendCommand('hands_down')" data-i18n="otto.hands_down">Hands Down</button>
+                    <button class="btn" onclick="sendCommand('hand_wave')" data-i18n="otto.hand_wave">Hand Wave</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h2 class="section-title collapsible" onclick="toggleSection(this)" data-i18n="otto.emoji">😊 Emoji Control</h2>
+            <div class="collapsible-content">
+                <div class="emoji-grid">
+                    <button class="btn emoji-btn" onclick="setEmoji('happy')" data-i18n="otto.emoji.happy">😊 Happy</button>
+                    <button class="btn emoji-btn" onclick="setEmoji('sad')" data-i18n="otto.emoji.sad">😢 Sad</button>
+                    <button class="btn emoji-btn" onclick="setEmoji('angry')" data-i18n="otto.emoji.angry">😠 Angry</button>
+                    <button class="btn emoji-btn" onclick="setEmoji('surprised')" data-i18n="otto.emoji.surprised">😲 Surprised</button>
+                    <button class="btn emoji-btn" onclick="setEmoji('thinking')" data-i18n="otto.emoji.thinking">🤔 Thinking</button>
+                    <button class="btn emoji-btn" onclick="setEmoji('neutral')" data-i18n="otto.emoji.neutral">😐 Neutral</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-section" style="background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%); border-left: 4px solid #ff9800;">
+            <h2 class="section-title" data-i18n="otto.servo_calibration">⚙️ Servo Calibration (Điều Chỉnh Góc Servo)</h2>
+            <div style="font-size: 12px; color: #666; margin-bottom: 20px;" data-i18n="otto.servo_calibration_hint">
+                Điều chỉnh góc của từng servo (0-180 độ) và trim (-50 đến +50 độ). Trim được lưu vĩnh viễn.
+            </div>
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="/servo-calibration" style="display: inline-block; padding: 15px 30px; background: #ff9800; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; transition: all 0.3s;" onmouseover="this.style.background='#f57c00'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='#ff9800'; this.style.transform='translateY(0)';" data-i18n="otto.open_servo_calibration">
+                    🔧 Mở Trang Điều Chỉnh Servo
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fixed PWA Install Button (Bottom Right Corner) -->
+    <div class="pwa-install-fixed" id="pwa-install-button-fixed-otto" style="position: fixed; bottom: 20px; right: 20px; background: rgba(255, 255, 255, 0.95); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 1000; backdrop-filter: blur(10px); text-align: center;">
+        <button onclick="installPWA()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;" 
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';" 
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)';">
+            📱 Cài đặt ứng dụng
+        </button>
+        <div style="font-size: 11px; color: #666; margin-top: 6px;">
+            Install App
+        </div>
+    </div>
+    <script>
+        // Hide PWA install button if on GitHub Pages App page or PWA is already installed
+        // Using same simple logic as Settings page that works
+        (function() {
+            function shouldHidePWAButton() {
+                // Check if on GitHub Pages App page
+                const currentHost = window.location.hostname;
+                if (currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/')) {
+                    return true;
+                }
+                // Check if PWA is already installed - standalone mode
+                if (window.matchMedia('(display-mode: standalone)').matches) {
+                    return true;
+                }
+                // Check iOS standalone mode
+                if (window.navigator.standalone === true) {
+                    return true;
+                }
+                // Check Android app mode
+                if (document.referrer && document.referrer.includes('android-app://')) {
+                    return true;
+                }
+                // Additional check: window.navigator.standalone on iOS
+                if (typeof navigator !== 'undefined' && navigator.standalone === true) {
+                    return true;
+                }
+                return false;
+            }
+            
+            function hidePWAButton() {
+                const pwaInstallButton = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+                if (pwaInstallButton && shouldHidePWAButton()) {
+                    console.log('Hiding PWA install button - on App page or PWA installed');
+                    pwaInstallButton.style.display = 'none';
+                    pwaInstallButton.style.visibility = 'hidden';
+                    return true;
+                }
+                return false;
+            }
+            
+            // Try to hide immediately
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    hidePWAButton();
+                    // Check again after a short delay
+                    setTimeout(hidePWAButton, 100);
+                    setTimeout(hidePWAButton, 500);
+                    setTimeout(hidePWAButton, 1000);
+                });
+            } else {
+                // DOM already loaded
+                hidePWAButton();
+                setTimeout(hidePWAButton, 100);
+                setTimeout(hidePWAButton, 500);
+                setTimeout(hidePWAButton, 1000);
+            }
+            
+            // Listen for visibility change (when app goes to foreground/background)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    hidePWAButton();
+                }
+            });
+            
+            // Listen for appinstalled event
+            window.addEventListener('appinstalled', function() {
+                console.log('PWA installed - hiding button');
+                hidePWAButton();
+            });
+            
+            // Check periodically (every 2 seconds for first 10 seconds)
+            let checkCount = 0;
+            const checkInterval = setInterval(function() {
+                if (hidePWAButton() || checkCount >= 5) {
+                    clearInterval(checkInterval);
+                }
+                checkCount++;
+            }, 2000);
+        })();
+    </script>
+    
+    <!-- Load JS from external -->
+    <script>
+        // Fallback loader functions
+        function loadFallbackCSS(name) {
+            console.warn('External CSS failed, trying fallback:', name);
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/static/css/' + name + '.min.css';
+            link.onerror = function() {
+                console.error('All CSS loading methods failed for:', name);
+            };
+            document.head.appendChild(link);
+        }
+        
+        function loadFallbackJS(name) {
+            console.warn('External JS failed, trying fallback:', name);
+            const script = document.createElement('script');
+            script.src = '/static/js/' + name + '.min.js';
+            script.onerror = function() {
+                console.error('All JS loading methods failed for:', name);
+            };
+            document.body.appendChild(script);
+        }
+    </script>
+    <!-- Critical functions that must be available immediately -->
+    <script>
+        // Define critical functions immediately (before external JS loads)
+        // These will be overridden by external JS if it loads successfully
+        function showStatus(message, isError) {
+            const status = document.getElementById('status');
+            if (status) {
+                status.className = 'status ' + (isError ? 'error' : 'success');
+                status.textContent = message;
+                setTimeout(() => status.textContent = '', 3000);
+            }
+        }
+        function sendCommand(command) {
+            fetch('/api/otto/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: command })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    if (typeof updateStatus === 'function') updateStatus();
+                    else showStatus('Command sent: ' + command, false);
+                } else {
+                    showStatus('Error: ' + (d.error || 'Unknown error'), true);
+                }
+            })
+            .catch(e => showStatus('Error: ' + e, true));
+        }
+        function setEmoji(emotion) {
+            fetch('/api/otto/emoji', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emotion: emotion })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) {
+                    showStatus('Error: ' + (d.error || 'Unknown error'), true);
+                }
+            })
+            .catch(e => showStatus('Error: ' + e, true));
+        }
+        function forceAiStart() {
+            fetch('/api/device/wake', { method: 'POST' })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    showStatus('AI đã được kích hoạt!', false);
+                } else {
+                    showStatus('Lỗi: ' + (d.error || 'Unknown error'), true);
+                }
+            })
+            .catch(e => showStatus('Error: ' + e, true));
+        }
+        function toggleMenu() {
+            const panel = document.getElementById('menu-panel');
+            if (panel) panel.classList.toggle('show');
+        }
+        // Toggle collapsible sections (for mobile)
+        function toggleSection(element) {
+            const content = element.nextElementSibling;
+            if (content && content.classList.contains('collapsible-content')) {
+                element.classList.toggle('collapsed');
+                content.classList.toggle('collapsed');
+            }
+        }
+        // Language functions (minimal implementation)
+        const translations = {
+            'zh-CN': {}, 'zh-TW': {}, 'en-US': {}, 'vi-VN': {}, 'ja-JP': {}, 'ko-KR': {}, 'th-TH': {}
+        };
+        function getCurrentLanguage() {
+            const saved = localStorage.getItem('otto_language');
+            if (saved && translations[saved]) return saved;
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('zh')) {
+                return browserLang === 'zh-TW' || browserLang === 'zh-Hant' ? 'zh-TW' : 'zh-CN';
+            }
+            if (translations[browserLang]) return browserLang;
+            return 'en-US';
+        }
+        function changeLanguage(lang) {
+            localStorage.setItem('otto_language', lang);
+            if (typeof updateTranslations === 'function') {
+                updateTranslations(lang);
+            }
+            const langSelect = document.getElementById('language');
+            if (langSelect) langSelect.value = lang;
+        }
+        // Voice control (minimal implementation)
+        let isRecording = false;
+        let recognition = null;
+        const isSpeechSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+        if (isSpeechSupported) {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+        }
+        function toggleVoiceControl() {
+            if (!isSpeechSupported) {
+                alert('Your browser does not support speech recognition. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+            } else {
+                try {
+                    recognition.lang = getCurrentLanguage();
+                    recognition.start();
+                    isRecording = true;
+                } catch (e) {
+                    console.error('Failed to start recognition:', e);
+                    alert('Failed to start voice recognition. Please check microphone permissions.');
+                }
+            }
+        }
+        // Volume control functions
+        let volumeUpdateTimer = null;
+        function updateVolumeDisplay(value) {
+            const label = document.getElementById('volume-value');
+            if (label) {
+                label.textContent = Math.round(value) + '%';
+            }
+        }
+        function handleVolumeInput(value) {
+            updateVolumeDisplay(value);
+            if (volumeUpdateTimer) {
+                clearTimeout(volumeUpdateTimer);
+            }
+            volumeUpdateTimer = setTimeout(() => {
+                setDeviceVolume(value);
+            }, 200);
+        }
+        async function setDeviceVolume(value) {
+            const volume = parseInt(value, 10);
+            if (isNaN(volume)) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/audio/volume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ volume })
+                });
+                if (!res.ok) {
+                    throw new Error('status ' + res.status);
+                }
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to update volume');
+                }
+            } catch (err) {
+                console.error('setDeviceVolume error', err);
+                if (typeof showStatus === 'function') {
+                    showStatus('Không thể cập nhật âm lượng: ' + err.message, true);
+                }
+            }
+        }
+        // QR Code Scanner functions
+        let qrStream = null;
+        let qrVideo = null;
+        let qrCanvas = null;
+        let qrContext = null;
+        let qrScanInterval = null;
+        function stopQRScanner() {
+            if (qrScanInterval) {
+                clearInterval(qrScanInterval);
+                qrScanInterval = null;
+            }
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+            if (qrVideo) {
+                qrVideo.srcObject = null;
+            }
+            const scannerDiv = document.getElementById('qr-scanner');
+            if (scannerDiv) scannerDiv.style.display = 'none';
+        }
+        async function scanQRCode() {
+            const scannerDiv = document.getElementById('qr-scanner');
+            if (scannerDiv) scannerDiv.style.display = 'block';
+            const statusDiv = document.getElementById('qr-status');
+            qrVideo = document.getElementById('qr-video');
+            qrCanvas = document.getElementById('qr-canvas');
+            if (!qrVideo || !qrCanvas) {
+                alert('QR scanner elements not found');
+                return;
+            }
+            statusDiv.textContent = 'Requesting camera access...';
+            try {
+                qrStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
+                qrVideo.srcObject = qrStream;
+                qrVideo.setAttribute('playsinline', true);
+                qrVideo.play();
+                qrContext = qrCanvas.getContext('2d');
+                qrCanvas.width = qrVideo.videoWidth;
+                qrCanvas.height = qrVideo.videoHeight;
+                statusDiv.textContent = 'Point camera at QR code...';
+                qrScanInterval = setInterval(function() {
+                    if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+                        qrContext.drawImage(qrVideo, 0, 0, qrCanvas.width, qrCanvas.height);
+                        const imageData = qrContext.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+                        if (window.jsQR) {
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            if (code) {
+                                statusDiv.textContent = 'QR code detected! Processing...';
+                                clearInterval(qrScanInterval);
+                                stopQRScanner();
+                                if (typeof handleQRCodeResult === 'function') {
+                                    handleQRCodeResult(code.data);
+                                }
+                            }
+                        }
+                    }
+                }, 100);
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                statusDiv.textContent = 'Error: ' + err.message;
+                statusDiv.style.color = '#dc3545';
+            }
+        }
+        // Saved Devices functions
+        function getSavedDevices() {
+            const saved = localStorage.getItem('otto_saved_devices');
+            return saved ? JSON.parse(saved) : [];
+        }
+        async function showSavedDevices() {
+            const devicesListDiv = document.getElementById('saved-devices-list');
+            const containerDiv = document.getElementById('devices-container');
+            const qrScannerDiv = document.getElementById('qr-scanner');
+            if (qrScannerDiv && qrScannerDiv.style.display !== 'none') {
+                stopQRScanner();
+            }
+            if (devicesListDiv) devicesListDiv.style.display = 'block';
+            const devices = getSavedDevices();
+            if (devices.length === 0) {
+                if (containerDiv) {
+                    containerDiv.innerHTML = '<p style="text-align: center; color: #666;">No saved devices</p>';
+                }
+                return;
+            }
+            if (containerDiv) {
+                containerDiv.innerHTML = '';
+                devices.forEach(device => {
+                    const deviceDiv = document.createElement('div');
+                    deviceDiv.style.cssText = 'padding: 15px; margin: 10px 0; background: white; border-radius: 8px; border: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;';
+                    const infoDiv = document.createElement('div');
+                    infoDiv.innerHTML = `<div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${device.device_name}</div><div style="font-size: 14px; color: #666;">${device.ip_address}:${device.port}</div>`;
+                    const buttonDiv = document.createElement('div');
+                    buttonDiv.style.cssText = 'display: flex; gap: 10px;';
+                    const connectBtn = document.createElement('button');
+                    connectBtn.textContent = 'Connect';
+                    connectBtn.style.cssText = 'padding: 8px 16px; font-size: 14px; background: #059669; color: white; border: none; border-radius: 4px;';
+                    connectBtn.onclick = () => {
+                        if (typeof connectToDevice === 'function') {
+                            connectToDevice(device);
+                        } else {
+                            window.location.href = `http://${device.ip_address}:${device.port}/otto`;
+                        }
+                    };
+                    buttonDiv.appendChild(connectBtn);
+                    deviceDiv.appendChild(infoDiv);
+                    deviceDiv.appendChild(buttonDiv);
+                    containerDiv.appendChild(deviceDiv);
+                });
+            }
+        }
+        async function showQrCodeOnLCD() {
+            try {
+                showStatus('Đang hiển thị QR code lên màn hình LCD...', false);
+                const res = await fetch('/api/device/show-qr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qr_data: window.location.origin })
+                });
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('Failed to show QR code, status:', res.status, errorText);
+                    showStatus('Lỗi khi hiển thị QR code: ' + res.status, true);
+                    return;
+                }
+                const data = await res.json();
+                if (data.success) {
+                    showStatus('✅ QR code đã được hiển thị trên màn hình LCD!', false);
+                    console.log('QR code displayed on LCD:', data.qr_data || window.location.origin);
+                } else {
+                    const errorMsg = data.error || 'Failed to show QR code';
+                    console.error('Error showing QR code:', errorMsg);
+                    showStatus('Lỗi: ' + errorMsg, true);
+                }
+            } catch (e) {
+                console.error('Error showing QR code:', e.message);
+                showStatus('Lỗi kết nối: ' + e.message, true);
+            }
+        }
+        
+        // PWA Install function (minimal fallback for Otto page)
+        function isOnAppPage() {
+            const currentHost = window.location.hostname;
+            return currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/');
+        }
+        
+        function isPWAInstalled() {
+            // Check if running as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://')) {
+                return true;
+            }
+            // Check if on GitHub Pages App URL
+            const currentHost = window.location.hostname;
+            if (currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/')) {
+                return true;
+            }
+            return false;
+        }
+        
+        function hidePWAInstallButton() {
+            const pwaInstallButton = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+            if (pwaInstallButton) {
+                if (isOnAppPage() || isPWAInstalled()) {
+                    console.log('Hiding PWA install button - on App page or PWA installed');
+                    pwaInstallButton.style.display = 'none';
+                    pwaInstallButton.style.visibility = 'hidden';
+                    return true;
+                } else {
+                    pwaInstallButton.style.display = '';
+                    pwaInstallButton.style.visibility = '';
+                }
+            }
+            return false;
+        }
+        
+        function installPWA() {
+            console.log('installPWA called');
+            const pwaBanner = document.getElementById('pwa-install-banner');
+            if (pwaBanner) {
+                pwaBanner.style.display = 'none';
+            }
+            localStorage.setItem('pwa-banner-dismissed', 'true');
+            // Hide button immediately
+            const btn = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+            if (btn) {
+                btn.style.display = 'none';
+                btn.style.visibility = 'hidden';
+            }
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            if (isAndroid) {
+                window.location.href = 'https://nguenvanky.github.io/App/';
+            } else if (isIOS) {
+                alert('📱 Hướng dẫn cài đặt trên iPhone/iPad:\n\n1. Nhấn nút Share (mũi tên lên ⬆️) ở thanh địa chỉ Safari\n2. Cuộn xuống và chọn "Thêm vào Màn hình chính"\n3. Nhấn "Thêm"\n\n💡 Ứng dụng sẽ lưu trực tiếp trang Otto Control này.');
+            } else {
+                window.location.href = 'https://nguenvanky.github.io/App/';
+            }
+        }
+        
+        // Hide button immediately if on GitHub Pages App page or PWA installed
+        hidePWAInstallButton();
+    </script>
+    <script src="https://nguenvanky.github.io/App/scripts/otto.min.js?v=1.0.0" 
+            onerror="loadFallbackJS('otto')"
+            onload="
+                // After external JS loads, check again to hide button (same as Settings page)
+                setTimeout(function() {
+                    const btn = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+                    if (btn) {
+                        const currentHost = window.location.hostname;
+                        const isOnApp = currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/');
+                        const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                                          window.navigator.standalone === true ||
+                                          (document.referrer && document.referrer.includes('android-app://'));
+                        if (isOnApp || isInstalled) {
+                            console.log('Hiding PWA install button - on App page or PWA installed');
+                            btn.style.display = 'none';
+                            btn.style.visibility = 'hidden';
+                        }
+                    }
+                }, 500);
+            "></script>
+    
+    <!-- Fallback JS (minimal inline for offline mode) -->
+    <noscript>
+    <script>
+        // Minimal fallback functions for noscript mode
+        if (typeof showStatus === 'undefined') {
+            function showStatus(message, isError) {
+                const status = document.getElementById('status');
+                if (status) {
+                    status.className = 'status ' + (isError ? 'error' : 'success');
+                    status.textContent = message;
+                    setTimeout(() => status.textContent = '', 3000);
+                }
+            }
+        }
+        if (typeof sendCommand === 'undefined') {
+            function sendCommand(command) {
+                fetch('/api/otto/command', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.success) {
+                        showStatus('Command sent: ' + command, false);
+                    } else {
+                        showStatus('Error: ' + (d.error || 'Unknown error'), true);
+                    }
+                })
+                .catch(e => showStatus('Error: ' + e, true));
+            }
+        }
+        if (typeof setEmoji === 'undefined') {
+            function setEmoji(emotion) {
+                fetch('/api/otto/emoji', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emotion: emotion })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (!d.success) {
+                        showStatus('Error: ' + (d.error || 'Unknown error'), true);
+                    }
+                })
+                .catch(e => showStatus('Error: ' + e, true));
+            }
+        }
+        // Language translations
+        const translations = {
+            'zh-CN': {
+                'otto.title': '🤖 Otto 机器人控制',
+                'otto.status.idle': '状态: 空闲',
+                'otto.status.moving': '状态: 移动中',
+                'otto.direction': '方向控制',
+                'otto.forward': '⬆️ 前进',
+                'otto.left': '⬅️ 左转',
+                'otto.right': '➡️ 右转',
+                'otto.backward': '⬇️ 后退',
+                'otto.stop': '⏹️ 停止',
+                'otto.dance': '舞蹈动作',
+                'otto.jump': '跳跃',
+                'otto.swing': '摇摆',
+                'otto.moonwalk': '太空步',
+                'otto.bend': '弯腰',
+                'otto.shake_leg': '摇腿',
+                'otto.updown': '上下',
+                'otto.tiptoe_swing': '踮脚摇摆',
+                'otto.jitter': '抖动',
+                'otto.ascending_turn': '上升转身',
+                'otto.crusaito': 'Crusaito',
+                'otto.flapping': '拍打',
+                'otto.hands': '手部动作',
+                'otto.hands_up': '举手',
+                'otto.hands_down': '放手',
+                'otto.hand_wave': '挥手',
+                'otto.emoji': '表情控制',
+                'otto.emoji.happy': '😊 开心',
+                'otto.emoji.sad': '😢 难过',
+                'otto.emoji.angry': '😠 生气',
+                'otto.emoji.surprised': '😲 惊讶',
+                'otto.emoji.thinking': '🤔 思考',
+                'otto.emoji.neutral': '😐 中性',
+                'otto.voice_control': '🎤 语音控制 (语音指令)',
+                'otto.voice_start': '🎤 开始语音控制',
+                'otto.voice_stop': '⏹️ 停止录音',
+                'otto.voice_hint': '点击按钮并说话以控制Otto机器人。AI会理解您的指令并自动控制Otto。示例: "Otto 前进", "Otto 跳跃", "Otto 停止"',
+                'otto.voice_status_recording': '🎤 正在录音... 请说话！',
+                'otto.voice_status_processing': '🤔 处理中... 正在发送到AI...',
+                'otto.voice_status_sent': '✅ 指令已发送！AI正在处理...'
+            },
+            'zh-TW': {
+                'otto.title': '🤖 Otto 機器人控制',
+                'otto.status.idle': '狀態: 閒置',
+                'otto.status.moving': '狀態: 移動中',
+                'otto.direction': '方向控制',
+                'otto.forward': '⬆️ 前進',
+                'otto.left': '⬅️ 左轉',
+                'otto.right': '➡️ 右轉',
+                'otto.backward': '⬇️ 後退',
+                'otto.stop': '⏹️ 停止',
+                'otto.dance': '舞蹈動作',
+                'otto.jump': '跳躍',
+                'otto.swing': '搖擺',
+                'otto.moonwalk': '太空步',
+                'otto.bend': '彎腰',
+                'otto.shake_leg': '搖腿',
+                'otto.updown': '上下',
+                'otto.tiptoe_swing': '踮腳搖擺',
+                'otto.jitter': '抖動',
+                'otto.ascending_turn': '上升轉身',
+                'otto.crusaito': 'Crusaito',
+                'otto.flapping': '拍打',
+                'otto.hands': '手部動作',
+                'otto.hands_up': '舉手',
+                'otto.hands_down': '放手',
+                'otto.hand_wave': '揮手',
+                'otto.emoji': '表情控制',
+                'otto.emoji.happy': '😊 開心',
+                'otto.emoji.sad': '😢 難過',
+                'otto.emoji.angry': '😠 生氣',
+                'otto.emoji.surprised': '😲 驚訝',
+                'otto.emoji.thinking': '🤔 思考',
+                'otto.emoji.neutral': '😐 中性',
+                'otto.voice_control': '🎤 語音控制 (語音指令)',
+                'otto.voice_start': '🎤 開始語音控制',
+                'otto.voice_stop': '⏹️ 停止錄音',
+                'otto.voice_hint': '點擊按鈕並說話以控制Otto機器人。AI會理解您的指令並自動控制Otto。範例: "Otto 前進", "Otto 跳躍", "Otto 停止"',
+                'otto.voice_status_recording': '🎤 正在錄音... 請說話！',
+                'otto.voice_status_processing': '🤔 處理中... 正在發送到AI...',
+                'otto.voice_status_sent': '✅ 指令已發送！AI正在處理...'
+            },
+            'en-US': {
+                'otto.title': '🤖 Otto Robot Control',
+                'otto.status.idle': 'Status: Idle',
+                'otto.status.moving': 'Status: Moving',
+                'otto.direction': 'Direction Control',
+                'otto.forward': '⬆️ Forward',
+                'otto.left': '⬅️ Left',
+                'otto.right': '➡️ Right',
+                'otto.backward': '⬇️ Backward',
+                'otto.stop': '⏹️ Stop',
+                'otto.dance': 'Dance Moves',
+                'otto.jump': 'Jump',
+                'otto.swing': 'Swing',
+                'otto.moonwalk': 'Moonwalk',
+                'otto.bend': 'Bend',
+                'otto.shake_leg': 'Shake Leg',
+                'otto.updown': 'Up & Down',
+                'otto.tiptoe_swing': 'Tiptoe Swing',
+                'otto.jitter': 'Jitter',
+                'otto.ascending_turn': 'Ascending Turn',
+                'otto.crusaito': 'Crusaito',
+                'otto.flapping': 'Flapping',
+                'otto.hands': 'Hand Actions',
+                'otto.hands_up': 'Hands Up',
+                'otto.hands_down': 'Hands Down',
+                'otto.hand_wave': 'Hand Wave',
+                'otto.emoji': 'Emoji Control',
+                'otto.emoji.happy': '😊 Happy',
+                'otto.emoji.sad': '😢 Sad',
+                'otto.emoji.angry': '😠 Angry',
+                'otto.emoji.surprised': '😲 Surprised',
+                'otto.emoji.thinking': '🤔 Thinking',
+                'otto.emoji.neutral': '😐 Neutral',
+                'otto.voice_control': '🎤 Voice Control (Voice Command)',
+                'otto.voice_start': '🎤 Start Voice Control',
+                'otto.voice_stop': '⏹️ Stop Recording',
+                'otto.voice_hint': 'Click the button and speak to control Otto robot. The AI will understand your commands and control Otto automatically. Examples: "Otto go forward", "Otto jump", "Otto stop"',
+                'otto.voice_status_recording': '🎤 Recording... Speak now!',
+                'otto.voice_status_processing': '🤔 Processing... Sending to AI...',
+                'otto.voice_status_sent': '✅ Command sent! AI is processing...'
+            },
+            'vi-VN': {
+                'otto.title': '🤖 Điều Khiển Robot Otto',
+                'otto.status.idle': 'Trạng thái: Nhàn rỗi',
+                'otto.status.moving': 'Trạng thái: Đang di chuyển',
+                'otto.direction': 'Điều Khiển Hướng',
+                'otto.forward': '⬆️ Tiến',
+                'otto.left': '⬅️ Trái',
+                'otto.right': '➡️ Phải',
+                'otto.backward': '⬇️ Lùi',
+                'otto.stop': '⏹️ Dừng',
+                'otto.dance': 'Động Tác Nhảy',
+                'otto.jump': 'Nhảy',
+                'otto.swing': 'Đu Đưa',
+                'otto.moonwalk': 'Moonwalk',
+                'otto.bend': 'Cúi',
+                'otto.shake_leg': 'Lắc Chân',
+                'otto.updown': 'Lên & Xuống',
+                'otto.tiptoe_swing': 'Đu Đưa Nhón Chân',
+                'otto.jitter': 'Rung',
+                'otto.ascending_turn': 'Xoay Lên',
+                'otto.crusaito': 'Crusaito',
+                'otto.flapping': 'Vỗ',
+                'otto.hands': 'Động Tác Tay',
+                'otto.hands_up': 'Giơ Tay',
+                'otto.hands_down': 'Hạ Tay',
+                'otto.hand_wave': 'Vẫy Tay',
+                'otto.emoji': 'Điều Khiển Emoji',
+                'otto.emoji.happy': '😊 Vui',
+                'otto.emoji.sad': '😢 Buồn',
+                'otto.emoji.angry': '😠 Giận',
+                'otto.emoji.surprised': '😲 Ngạc Nhiên',
+                'otto.emoji.thinking': '🤔 Suy Nghĩ',
+                'otto.emoji.neutral': '😐 Trung Tính',
+                'otto.voice_control': '🎤 Điều Khiển Giọng Nói (Lệnh Giọng Nói)',
+                'otto.voice_start': '🎤 Bắt Đầu Điều Khiển Giọng Nói',
+                'otto.voice_stop': '⏹️ Dừng Ghi Âm',
+                'otto.voice_hint': 'Nhấn nút và nói để điều khiển robot Otto. AI sẽ hiểu lệnh của bạn và tự động điều khiển Otto. Ví dụ: "Otto đi về phía trước", "Otto nhảy", "Otto dừng lại"',
+                'otto.voice_status_recording': '🎤 Đang ghi âm... Vui lòng nói!',
+                'otto.voice_status_processing': '🤔 Đang xử lý... Đang gửi đến AI...',
+                'otto.voice_status_sent': '✅ Lệnh đã được gửi! AI đang xử lý...'
+            },
+            'zh-CN': {
+                'otto.title': '🤖 Otto 机器人控制',
+                'otto.status.idle': '状态: 空闲',
+                'otto.status.moving': '状态: 移动中',
+                'otto.direction': '方向控制',
+                'otto.forward': '⬆️ 前进',
+                'otto.left': '⬅️ 左转',
+                'otto.right': '➡️ 右转',
+                'otto.backward': '⬇️ 后退',
+                'otto.stop': '⏹️ 停止',
+                'otto.dance': '舞蹈动作',
+                'otto.jump': '跳跃',
+                'otto.swing': '摇摆',
+                'otto.moonwalk': '太空步',
+                'otto.bend': '弯腰',
+                'otto.shake_leg': '摇腿',
+                'otto.updown': '上下',
+                'otto.tiptoe_swing': '踮脚摇摆',
+                'otto.jitter': '抖动',
+                'otto.ascending_turn': '上升转身',
+                'otto.crusaito': 'Crusaito',
+                'otto.flapping': '拍打',
+                'otto.hands': '手部动作',
+                'otto.hands_up': '举手',
+                'otto.hands_down': '放手',
+                'otto.hand_wave': '挥手',
+                'otto.emoji': '表情控制',
+                'otto.emoji.happy': '😊 开心',
+                'otto.emoji.sad': '😢 难过',
+                'otto.emoji.angry': '😠 生气',
+                'otto.emoji.surprised': '😲 惊讶',
+                'otto.emoji.thinking': '🤔 思考',
+                'otto.emoji.neutral': '😐 中性',
+                'otto.voice_control': '🎤 语音控制 (语音指令)',
+                'otto.voice_start': '🎤 开始语音控制',
+                'otto.voice_stop': '⏹️ 停止录音',
+                'otto.voice_hint': '点击按钮并说话以控制Otto机器人。AI会理解您的指令并自动控制Otto。示例: "Otto 前进", "Otto 跳跃", "Otto 停止"',
+                'otto.voice_status_recording': '🎤 正在录音... 请说话！',
+                'otto.voice_status_processing': '🤔 处理中... 正在发送到AI...',
+                'otto.voice_status_sent': '✅ 指令已发送！AI正在处理...',
+                'otto.device_discovery': '🔍 设备发现',
+                'otto.scan_qr': '📷 扫描二维码',
+                'otto.saved_devices': '📋 已保存设备',
+                'otto.stop_scan': '停止扫描',
+                'otto.no_device_found': '未找到设备',
+                'otto.connect': '连接',
+                'otto.disconnect': '断开连接',
+                'otto.remove': '删除',
+                'otto.online': '在线',
+                'otto.offline': '离线',
+                'otto.show_qr_lcd': '📺 在LCD显示QR码'
+            },
+            'zh-TW': {
+                'otto.device_discovery': '🔍 裝置發現',
+                'otto.scan_qr': '📷 掃描 QR Code',
+                'otto.saved_devices': '📋 已儲存裝置',
+                'otto.stop_scan': '停止掃描',
+                'otto.no_device_found': '找不到裝置',
+                'otto.connect': '連接',
+                'otto.disconnect': '斷開連接',
+                'otto.remove': '刪除',
+                'otto.online': '線上',
+                'otto.offline': '離線',
+                'otto.show_qr_lcd': '📺 在LCD顯示QR碼'
+            },
+            'vi-VN': {
+                'otto.device_discovery': '🔍 Tìm Thiết Bị',
+                'otto.scan_qr': '📷 Quét QR Code',
+                'otto.saved_devices': '📋 Thiết Bị Đã Lưu',
+                'otto.stop_scan': 'Dừng Quét',
+                'otto.no_device_found': 'Không tìm thấy thiết bị',
+                'otto.connect': 'Kết Nối',
+                'otto.disconnect': 'Ngắt Kết Nối',
+                'otto.remove': 'Xóa',
+                'otto.online': 'Trực Tuyến',
+                'otto.offline': 'Ngoại Tuyến',
+                'otto.show_qr_lcd': '📺 Hiển Thị QR Trên LCD'
+            },
+            'en-US': {
+                'otto.show_qr_lcd': '📺 Show QR on LCD'
+            },
+            'ja-JP': {
+                'otto.show_qr_lcd': '📺 LCDにQRコードを表示'
+            },
+            'ko-KR': {
+                'otto.show_qr_lcd': '📺 LCD에 QR 표시'
+            },
+            'th-TH': {
+                'otto.show_qr_lcd': '📺 แสดง QR บน LCD'
+            }
+        };
+        
+        // Get saved language or detect browser language
+        function getCurrentLanguage() {
+            const saved = localStorage.getItem('otto_language');
+            if (saved && translations[saved]) return saved;
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('zh')) {
+                return browserLang === 'zh-TW' || browserLang === 'zh-Hant' ? 'zh-TW' : 'zh-CN';
+            }
+            if (translations[browserLang]) return browserLang;
+            return 'en-US'; // Default
+        }
+        
+        // Change language
+        function changeLanguage(lang) {
+            localStorage.setItem('otto_language', lang);
+            updateTranslations(lang);
+        }
+        
+        // Update translations
+        function updateTranslations(lang) {
+            const t = translations[lang] || translations['en-US'];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = t[key];
+                    } else {
+                        el.textContent = t[key];
+                    }
+                }
+            });
+            document.getElementById('language').value = lang;
+        }
+        
+        // Initialize language on page load
+        const currentLang = getCurrentLanguage();
+        updateTranslations(currentLang);
+        
+        // QR Code Scanner using jsQR library (loaded from CDN)
+        let qrStream = null;
+        let qrVideo = null;
+        let qrCanvas = null;
+        let qrContext = null;
+        let qrScanInterval = null;
+        
+        // Load jsQR library
+        if (!window.jsQR) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+            script.onload = function() {
+                console.log('jsQR library loaded');
+            };
+            document.head.appendChild(script);
+        }
+        
+        async function scanQRCode() {
+            const scannerDiv = document.getElementById('qr-scanner');
+            if (scannerDiv) {
+                scannerDiv.style.display = 'block';
+            }
+            const statusDiv = document.getElementById('qr-status');
+            qrVideo = document.getElementById('qr-video');
+            qrCanvas = document.getElementById('qr-canvas');
+            
+            if (!qrVideo || !qrCanvas) {
+                alert('QR scanner elements not found');
+                return;
+            }
+            
+            scannerDiv.style.display = 'block';
+            statusDiv.textContent = 'Requesting camera access...';
+            
+            try {
+                qrStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Use back camera on mobile
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                qrVideo.srcObject = qrStream;
+                qrVideo.setAttribute('playsinline', true);
+                qrVideo.play();
+                
+                qrContext = qrCanvas.getContext('2d');
+                qrCanvas.width = qrVideo.videoWidth;
+                qrCanvas.height = qrVideo.videoHeight;
+                
+                statusDiv.textContent = 'Point camera at QR code...';
+                
+                // Start scanning
+                qrScanInterval = setInterval(function() {
+                    if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+                        qrContext.drawImage(qrVideo, 0, 0, qrCanvas.width, qrCanvas.height);
+                        const imageData = qrContext.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+                        
+                        if (window.jsQR) {
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            if (code) {
+                                statusDiv.textContent = 'QR code detected! Processing...';
+                                clearInterval(qrScanInterval);
+                                stopQRScanner();
+                                handleQRCodeResult(code.data);
+                            }
+                        }
+                    }
+                }, 100); // Scan every 100ms
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                statusDiv.textContent = 'Error: ' + err.message;
+                statusDiv.style.color = '#dc3545';
+            }
+        }
+        
+        function stopQRScanner() {
+            if (qrScanInterval) {
+                clearInterval(qrScanInterval);
+                qrScanInterval = null;
+            }
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+            if (qrVideo) {
+                qrVideo.srcObject = null;
+            }
+            document.getElementById('qr-scanner').style.display = 'none';
+        }
+        
+        async function handleQRCodeResult(qrData) {
+            try {
+                // Parse QR code data (should be JSON with device info)
+                let deviceInfo;
+                if (qrData.startsWith('{')) {
+                    deviceInfo = JSON.parse(qrData);
+                } else {
+                    // If QR code is just URL, try to fetch device info
+                    const url = qrData.startsWith('http') ? qrData : 'http://' + qrData;
+                    const response = await fetch(url + '/api/device/info');
+                    deviceInfo = await response.json();
+                }
+                
+                // Save device and connect
+                if (deviceInfo.ip_address && deviceInfo.port) {
+                    saveDevice(deviceInfo);
+                    connectToDevice(deviceInfo);
+                } else {
+                    alert('Invalid QR code: missing IP address or port');
+                }
+            } catch (err) {
+                console.error('Error processing QR code:', err);
+                alert('Error processing QR code: ' + err.message);
+            }
+        }
+        
+        // Saved Devices Management
+        function saveDevice(deviceInfo) {
+            const devices = getSavedDevices();
+            const deviceId = deviceInfo.device_id || deviceInfo.ip_address;
+            
+            // Check if device already exists
+            const existingIndex = devices.findIndex(d => d.device_id === deviceId);
+            const device = {
+                device_id: deviceId,
+                device_name: deviceInfo.device_name || 'Otto Robot',
+                ip_address: deviceInfo.ip_address,
+                port: deviceInfo.port || 80,
+                last_connected: Date.now()
+            };
+            
+            if (existingIndex >= 0) {
+                devices[existingIndex] = device;
+            } else {
+                devices.push(device);
+            }
+            
+            localStorage.setItem('otto_saved_devices', JSON.stringify(devices));
+        }
+        
+        function getSavedDevices() {
+            const saved = localStorage.getItem('otto_saved_devices');
+            return saved ? JSON.parse(saved) : [];
+        }
+        
+        function removeDevice(deviceId) {
+            const devices = getSavedDevices();
+            const filtered = devices.filter(d => d.device_id !== deviceId);
+            localStorage.setItem('otto_saved_devices', JSON.stringify(filtered));
+            showSavedDevices();
+        }
+        
+        async function showSavedDevices() {
+            const devicesListDiv = document.getElementById('saved-devices-list');
+            const containerDiv = document.getElementById('devices-container');
+            const qrScannerDiv = document.getElementById('qr-scanner');
+            
+            if (qrScannerDiv && qrScannerDiv.style.display !== 'none') {
+                stopQRScanner();
+            }
+            
+            if (devicesListDiv) {
+                devicesListDiv.style.display = 'block';
+            }
+            
+            const devices = getSavedDevices();
+            if (devices.length === 0) {
+                containerDiv.innerHTML = '<p style="text-align: center; color: #666;">No saved devices</p>';
+                devicesListDiv.style.display = 'block';
+                return;
+            }
+            
+            containerDiv.innerHTML = '';
+            devices.forEach(device => {
+                const deviceDiv = document.createElement('div');
+                deviceDiv.style.cssText = 'padding: 15px; margin: 10px 0; background: white; border-radius: 8px; border: 2px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;';
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.innerHTML = `
+                    <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${device.device_name}</div>
+                    <div style="font-size: 14px; color: #666;">${device.ip_address}:${device.port}</div>
+                    <div style="font-size: 12px; color: #999;">Last connected: ${new Date(device.last_connected).toLocaleString()}</div>
+                `;
+                
+                const buttonDiv = document.createElement('div');
+                buttonDiv.style.cssText = 'display: flex; gap: 10px;';
+                
+                const connectBtn = document.createElement('button');
+                connectBtn.className = 'btn';
+                connectBtn.textContent = 'Connect';
+                connectBtn.style.cssText = 'padding: 8px 16px; font-size: 14px; background: #059669;';
+                connectBtn.onclick = () => connectToDevice(device);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn';
+                removeBtn.textContent = 'Remove';
+                removeBtn.style.cssText = 'padding: 8px 16px; font-size: 14px; background: #dc3545;';
+                removeBtn.onclick = () => removeDevice(device.device_id);
+                
+                buttonDiv.appendChild(connectBtn);
+                buttonDiv.appendChild(removeBtn);
+                deviceDiv.appendChild(infoDiv);
+                deviceDiv.appendChild(buttonDiv);
+                containerDiv.appendChild(deviceDiv);
+            });
+            
+            devicesListDiv.style.display = 'block';
+        }
+        
+        async function connectToDevice(deviceInfo) {
+            const ip = deviceInfo.ip_address;
+            const port = deviceInfo.port || 80;
+            const url = `http://${ip}:${port}/otto`;
+            
+            // Check if device is reachable
+            try {
+                const response = await fetch(`http://${ip}:${port}/api/device/info`, { 
+                    method: 'GET',
+                    timeout: 3000 
+                });
+                if (response.ok) {
+                    // Update last connected time
+                    saveDevice(deviceInfo);
+                    // Redirect to device
+                    window.location.href = url;
+                } else {
+                    alert('Device is offline or unreachable');
+                }
+            } catch (err) {
+                alert('Error connecting to device: ' + err.message);
+            }
+        }
+        
+        // Show QR code on LCD
+        async function showQrCodeOnLCD() {
+            try {
+                const res = await fetch('/api/device/show-qr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                // Check if response is OK
+                if (!res.ok) {
+                    console.error('Failed to show QR code, status:', res.status);
+                    return;
+                }
+                
+                // Parse JSON response
+                let data;
+                try {
+                    const text = await res.text();
+                    data = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('Failed to parse JSON response:', parseError);
+                    console.error('Response text:', await res.text());
+                    return;
+                }
+                
+                if (data.success) {
+                    console.log('QR code displayed on LCD:', data.qr_data);
+                    // Don't show alert on auto-load, only on button click
+                    // alert('QR code displayed on LCD! Scan with your phone to connect.');
+                } else {
+                    console.error('Error showing QR code:', data.error || 'Failed to show QR code');
+                }
+            } catch (e) {
+                console.error('Error showing QR code:', e.message);
+            }
+        }
+        
+        // Auto-show QR code on LCD when page loads
+        window.addEventListener('load', function() {
+            // Initialize mobile UI
+            initMobileUI();
+            
+            // Auto-show QR code on LCD when entering control page
+            showQrCodeOnLCD();
+            
+            // Check for saved devices (for future auto-connect feature)
+            const devices = getSavedDevices();
+            if (devices.length > 0) {
+                // Try to connect to most recently used device
+                const lastDevice = devices.sort((a, b) => b.last_connected - a.last_connected)[0];
+                // Check if we're already on that device
+                const currentHost = window.location.hostname;
+                if (currentHost !== lastDevice.ip_address) {
+                    // Auto-connect only if not already connected
+                    // connectToDevice(lastDevice); // Commented out to avoid auto-redirect
+                }
+            }
+        });
+        
+        // Voice Control using Web Speech API
+        let recognition = null;
+        let isRecording = false;
+        
+        // Check if browser supports Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const isSpeechSupported = !!SpeechRecognition;
+        
+        if (isSpeechSupported) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = getCurrentLanguage();
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                updateVoiceButton(true);
+                const statusEl = document.getElementById('voice-status');
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.className = 'recording';
+                    const lang = getCurrentLanguage();
+                    const t = translations[lang] || translations['en-US'];
+                    statusEl.textContent = t['otto.voice_status_recording'] || '🎤 Recording... Speak now!';
+                }
+                // Update menu text
+                const menuVoiceText = document.getElementById('menu-voice-text');
+                if (menuVoiceText) {
+                    const lang = getCurrentLanguage();
+                    const t = translations[lang] || translations['en-US'];
+                    menuVoiceText.textContent = t['otto.voice_stop'] || '⏹️ Stop Recording';
+                }
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const textEl = document.getElementById('voice-text');
+                if (textEl) {
+                    textEl.style.display = 'block';
+                    textEl.textContent = transcript;
+                }
+                
+                // Send to AI
+                sendVoiceCommandToAI(transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                isRecording = false;
+                updateVoiceButton(false);
+                const statusEl = document.getElementById('voice-status');
+                if (statusEl) {
+                    statusEl.className = '';
+                    statusEl.textContent = '❌ Error: ' + event.error;
+                    setTimeout(() => {
+                        statusEl.style.display = 'none';
+                    }, 3000);
+                }
+            };
+            
+            recognition.onend = function() {
+                isRecording = false;
+                updateVoiceButton(false);
+                const statusEl = document.getElementById('voice-status');
+                if (statusEl && statusEl.className === 'recording') {
+                    statusEl.className = '';
+                    statusEl.textContent = '';
+                    statusEl.style.display = 'none';
+                }
+            };
+        }
+        
+        function toggleVoiceControl() {
+            if (!isSpeechSupported) {
+                alert('Your browser does not support speech recognition. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.lang = getCurrentLanguage();
+                    recognition.start();
+                } catch (e) {
+                    console.error('Failed to start recognition:', e);
+                    alert('Failed to start voice recognition. Please check microphone permissions.');
+                }
+            }
+        }
+        
+        function updateVoiceButton(recording) {
+            const btn = document.getElementById('voice-btn');
+            const lang = getCurrentLanguage();
+            const t = translations[lang] || translations['en-US'];
+            
+            if (recording) {
+                btn.classList.add('voice-recording');
+                btn.textContent = t['otto.voice_stop'] || '⏹️ Stop Recording';
+            } else {
+                btn.classList.remove('voice-recording');
+                btn.textContent = t['otto.voice_start'] || '🎤 Start Voice Control';
+            }
+        }
+        
+        async function sendVoiceCommandToAI(text) {
+            const statusEl = document.getElementById('voice-status');
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.className = 'processing';
+                const lang = getCurrentLanguage();
+                const t = translations[lang] || translations['en-US'];
+                statusEl.textContent = t['otto.voice_status_processing'] || '🤔 Processing... Sending to AI...';
+            }
+            
+            try {
+                const res = await fetch('/api/ai/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                const data = await res.json();
+                
+                if (data.success && statusEl) {
+                    statusEl.className = '';
+                    const lang = getCurrentLanguage();
+                    const t = translations[lang] || translations['en-US'];
+                    statusEl.textContent = t['otto.voice_status_sent'] || '✅ Command sent! AI is processing...';
+                    setTimeout(() => {
+                        if (statusEl) {
+                            statusEl.textContent = '';
+                            statusEl.style.display = 'none';
+                        }
+                        updateStatus();
+                    }, 3000);
+                } else {
+                    statusEl.className = '';
+                    statusEl.textContent = '❌ Error: ' + (data.message || 'Failed to send command');
+                }
+            } catch (e) {
+                statusEl.className = '';
+                statusEl.textContent = '❌ Error: ' + e.message;
+            }
+        }
+        
+        let forceAiBusy = false;
+        function notifyStatus(message, isError) {
+            if (typeof showStatus === 'function') {
+                showStatus(message, !!isError);
+            } else {
+                if (isError) {
+                    console.error(message);
+                    alert(message);
+                } else {
+                    console.log(message);
+                }
+            }
+        }
+        let volumeUpdateTimer = null;
+        function updateVolumeDisplay(value) {
+            const label = document.getElementById('volume-value');
+            if (label) {
+                label.textContent = Math.round(value) + '%';
+            }
+        }
+        function handleVolumeInput(value) {
+            updateVolumeDisplay(value);
+            if (volumeUpdateTimer) {
+                clearTimeout(volumeUpdateTimer);
+            }
+            volumeUpdateTimer = setTimeout(() => {
+                setDeviceVolume(value);
+            }, 200);
+        }
+        async function setDeviceVolume(value) {
+            const volume = parseInt(value, 10);
+            if (isNaN(volume)) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/audio/volume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ volume })
+                });
+                if (!res.ok) {
+                    throw new Error('status ' + res.status);
+                }
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to update volume');
+                }
+            } catch (err) {
+                console.error('setDeviceVolume error', err);
+                notifyStatus('Không thể cập nhật âm lượng: ' + err.message, true);
+            }
+        }
+        async function loadVolumeLevel() {
+            try {
+                const res = await fetch('/api/audio/volume');
+                if (!res.ok) {
+                    throw new Error('status ' + res.status);
+                }
+                const data = await res.json();
+                if (typeof data.volume === 'number') {
+                    const slider = document.getElementById('volume-slider');
+                    if (slider) {
+                        slider.value = data.volume;
+                        updateVolumeDisplay(data.volume);
+                    }
+                }
+            } catch (err) {
+                console.warn('Failed to load volume level', err);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadVolumeLevel);
+        async function forceAiStart() {
+            if (forceAiBusy) {
+                notifyStatus('Đang kích hoạt AI...', false);
+                return;
+            }
+            forceAiBusy = true;
+            notifyStatus('Đang kích hoạt AI...', false);
+            try {
+                const res = await fetch('/api/device/wake', { method: 'POST' });
+                if (!res.ok) {
+                    throw new Error('status ' + res.status);
+                }
+                await res.json().catch(() => ({}));
+                notifyStatus('AI đã được kích hoạt!', false);
+            } catch (err) {
+                console.error('forceAiStart error', err);
+                notifyStatus('Không thể kích hoạt AI: ' + err.message, true);
+            } finally {
+                setTimeout(() => { forceAiBusy = false; }, 2000);
+                const panel = document.getElementById('menu-panel');
+                if (panel) {
+                    panel.classList.remove('show');
+                }
+            }
+        }
+        
+        // Toggle menu panel
+        function toggleMenu() {
+            const panel = document.getElementById('menu-panel');
+            if (panel) {
+                panel.classList.toggle('show');
+            }
+        }
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menuButton = document.querySelector('.menu-button');
+            const menuPanel = document.getElementById('menu-panel');
+            if (menuPanel && menuButton && !menuPanel.contains(event.target) && !menuButton.contains(event.target)) {
+                menuPanel.classList.remove('show');
+            }
+        });
+        
+        // Toggle collapsible sections (for mobile)
+        function toggleSection(element) {
+            const content = element.nextElementSibling;
+            if (content && content.classList.contains('collapsible-content')) {
+                element.classList.toggle('collapsed');
+                content.classList.toggle('collapsed');
+            }
+        }
+        
+        // Auto-collapse sections on mobile
+        function initMobileUI() {
+            if (window.innerWidth <= 768) {
+                // Collapse all sections except direction control on mobile
+                const collapsibles = document.querySelectorAll('.collapsible');
+                collapsibles.forEach(el => {
+                    if (!el.closest('.control-section').querySelector('.direction-grid')) {
+                        el.classList.add('collapsed');
+                        const content = el.nextElementSibling;
+                        if (content && content.classList.contains('collapsible-content')) {
+                            content.classList.add('collapsed');
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                // Expand all sections on desktop
+                const collapsibles = document.querySelectorAll('.collapsible');
+                collapsibles.forEach(el => {
+                    el.classList.remove('collapsed');
+                    const content = el.nextElementSibling;
+                    if (content && content.classList.contains('collapsible-content')) {
+                        content.classList.remove('collapsed');
+                    }
+                });
+            }
+        });
+        
+        function sendCommand(command) {
+            // Haptic feedback on mobile (if supported)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            fetch('/api/otto/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: command })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) {
+                    updateStatus();
+                } else {
+                    alert('Error: ' + (d.error || 'Unknown error'));
+                }
+            })
+            .catch(e => alert('Error: ' + e));
+        }
+        
+        function setEmoji(emotion) {
+            fetch('/api/otto/emoji', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emotion: emotion })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) {
+                    alert('Error: ' + (d.error || 'Unknown error'));
+                }
+            })
+            .catch(e => alert('Error: ' + e));
+        }
+        
+        function updateStatus() {
+            fetch('/api/otto/status')
+            .then(r => r.json())
+            .then(d => {
+                const statusEl = document.getElementById('status');
+                const lang = getCurrentLanguage();
+                const t = translations[lang] || translations['en-US'];
+                const statusText = t['otto.status.' + d.status] || ('Status: ' + d.status);
+                statusEl.textContent = statusText;
+                statusEl.className = 'status ' + d.status;
+            })
+            .catch(e => console.error('Status error:', e));
+        }
+        
+        // Update status every 500ms
+        setInterval(updateStatus, 500);
+        updateStatus();
+        
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+        
+        // PWA Install Banner Logic - Auto Install
+        let deferredPrompt = null;
+        let pwaBanner = null;
+        let pwaInstallBtn = null;
+        
+        // Initialize PWA elements when DOM is ready
+        function initPWA() {
+            pwaBanner = document.getElementById('pwa-install-banner');
+            pwaInstallBtn = document.getElementById('pwa-install-btn');
+            
+            if (!pwaBanner) {
+                console.warn('PWA banner element not found');
+                return;
+            }
+            
+            console.log('PWA banner initialized');
+            
+            // Check if already installed
+            if (isPWAInstalled()) {
+                console.log('PWA already installed, hiding banner');
+                pwaBanner.style.display = 'none';
+                return;
+            }
+            
+            // Check if on GitHub Pages App page (không hiển thị banner ở đó)
+            if (isOnAppPage()) {
+                console.log('On GitHub Pages App page, hiding banner');
+                pwaBanner.style.display = 'none';
+                return;
+            }
+            
+            // Check if banner was dismissed
+            if (wasBannerDismissed()) {
+                console.log('PWA banner was dismissed, hiding');
+                pwaBanner.style.display = 'none';
+                return;
+            }
+            
+            // Show banner after 1 second (reduced from 3 for better UX)
+            setTimeout(function() {
+                if (pwaBanner && !isPWAInstalled() && !wasBannerDismissed() && !isOnAppPage()) {
+                    console.log('Showing PWA install banner');
+                    pwaBanner.style.display = 'block';
+                }
+            }, 1000);
+        }
+        
+        // Check if already installed
+        function isPWAInstalled() {
+            // Check if running as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://')) {
+                return true;
+            }
+            // Check if on GitHub Pages App URL (user đã cài từ đó)
+            const currentHost = window.location.hostname;
+            if (currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/')) {
+                // Nếu đang ở trang App, xem như đã cài hoặc không cần hiển thị banner
+                return true;
+            }
+            return false;
+        }
+        
+        // Check if banner was dismissed
+        function wasBannerDismissed() {
+            return localStorage.getItem('pwa-banner-dismissed') === 'true';
+        }
+        
+        // Check if on GitHub Pages App (không hiển thị banner ở đó)
+        function isOnAppPage() {
+            const currentHost = window.location.hostname;
+            return currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/');
+        }
+        
+        // Show PWA install banner
+        function showPWAInstallBanner() {
+            if (!pwaBanner) {
+                pwaBanner = document.getElementById('pwa-install-banner');
+            }
+            
+            // Không hiển thị banner nếu đang ở trang App
+            if (isOnAppPage()) {
+                console.log('On GitHub Pages App page, cannot show banner');
+                alert('Bạn đang ở trang cài đặt ứng dụng. Vui lòng làm theo hướng dẫn trên trang này để cài đặt.');
+                return;
+            }
+            
+            if (isPWAInstalled() || wasBannerDismissed()) {
+                return;
+            }
+            
+            if (pwaBanner) {
+                console.log('Force showing PWA banner');
+                pwaBanner.style.display = 'block';
+            }
+        }
+        
+        // Install PWA - Android redirect to GitHub Pages, iPhone show instructions
+        function installPWA() {
+            console.log('installPWA called');
+            
+            // Hide banner và dismiss
+            if (pwaBanner) {
+                pwaBanner.style.display = 'none';
+            }
+            localStorage.setItem('pwa-banner-dismissed', 'true');
+            
+            // Detect platform
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            
+            if (isAndroid) {
+                // Android: Redirect to GitHub Pages App để cài đặt
+                console.log('Android detected - redirecting to GitHub Pages App');
+                window.location.href = 'https://nguenvanky.github.io/App/';
+            } else if (isIOS) {
+                // iOS: Hiển thị hướng dẫn cài đặt trực tiếp từ trang hiện tại (không redirect)
+                console.log('iOS detected - showing manual instructions for current page');
+                const instructions = 
+                    '📱 Hướng dẫn cài đặt trên iPhone/iPad:\n\n' +
+                    '1. Nhấn nút Share (mũi tên lên ⬆️) ở thanh địa chỉ Safari\n' +
+                    '2. Cuộn xuống và chọn "Thêm vào Màn hình chính" hoặc "Add to Home Screen"\n' +
+                    '3. Nhấn "Thêm" hoặc "Add" ở góc phải trên\n' +
+                    '4. Ứng dụng sẽ xuất hiện trên màn hình chính của bạn\n\n' +
+                    '💡 Ứng dụng sẽ lưu trực tiếp trang Otto Control này, không cần qua GitHub Pages.';
+                alert(instructions);
+            } else {
+                // Desktop hoặc browser khác: Redirect đến GitHub Pages App
+                console.log('Desktop/Other browser detected - redirecting to GitHub Pages App');
+                window.location.href = 'https://nguenvanky.github.io/App/';
+            }
+        }
+        
+        // Dismiss banner
+        function dismissPWA() {
+            if (pwaBanner) {
+                pwaBanner.style.display = 'none';
+            }
+            localStorage.setItem('pwa-banner-dismissed', 'true');
+            console.log('PWA banner dismissed');
+        }
+        
+        // Listen for beforeinstallprompt event (Android/Chrome)
+        window.addEventListener('beforeinstallprompt', function(e) {
+            console.log('beforeinstallprompt event fired - browser supports automatic install');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            if (pwaInstallBtn) {
+                pwaInstallBtn.textContent = 'Cài đặt ngay';
+            }
+            
+            showPWAInstallBanner();
+        });
+        
+        // Listen for appinstalled event
+        window.addEventListener('appinstalled', function(evt) {
+            console.log('PWA app was installed successfully by browser');
+            if (pwaBanner) {
+                pwaBanner.style.display = 'none';
+            }
+            localStorage.setItem('pwa-banner-dismissed', 'true');
+            // Hide PWA install button when PWA is installed (Otto page - use specific ID)
+            const pwaInstallButton = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+            if (pwaInstallButton) {
+                console.log('PWA installed - hiding install button');
+                pwaInstallButton.style.display = 'none';
+                pwaInstallButton.style.visibility = 'hidden';
+            }
+        });
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPWA);
+        } else {
+            // DOM already loaded
+            initPWA();
+        }
+        
+        // Hide PWA install button immediately if on GitHub Pages App page or PWA installed
+        if (typeof hidePWAInstallButton === 'function') {
+            hidePWAInstallButton();
+        } else {
+            // Fallback if function not loaded yet (Otto page - use specific ID)
+            setTimeout(function() {
+                const pwaInstallButton = document.getElementById('pwa-install-button-fixed-otto') || document.querySelector('.pwa-install-fixed');
+                if (pwaInstallButton) {
+                    const currentHost = window.location.hostname;
+                    const isOnApp = currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/');
+                    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                                       window.navigator.standalone === true ||
+                                       (document.referrer && document.referrer.includes('android-app://'));
+                    if (isOnApp || isInstalled) {
+                        console.log('Hiding PWA install button - on App page or PWA installed');
+                        pwaInstallButton.style.display = 'none';
+                        pwaInstallButton.style.visibility = 'hidden';
+                    }
+                }
+            }, 100);
+        }
+        
+        // Also try to show banner even if beforeinstallprompt doesn't fire
+        setTimeout(function() {
+            if (!isPWAInstalled() && !wasBannerDismissed()) {
+                console.log('Fallback: showing banner after 2 seconds');
+                showPWAInstallBanner();
+            } else {
+                console.log('Banner not shown - installed:', isPWAInstalled(), 'dismissed:', wasBannerDismissed());
+            }
+            // Check again to hide button after timeout
+            if (typeof hidePWAInstallButton === 'function') {
+                hidePWAInstallButton();
+            } else {
+                const pwaInstallButton = document.querySelector('.pwa-install-fixed');
+                if (pwaInstallButton) {
+                    const currentHost = window.location.hostname;
+                    const isOnApp = currentHost === 'nguenvanky.github.io' && window.location.pathname.startsWith('/App/');
+                    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
+                                       window.navigator.standalone === true ||
+                                       document.referrer.includes('android-app://');
+                    if (isOnApp || isInstalled) {
+                        console.log('Hiding PWA install button - on App page or PWA installed');
+                        pwaInstallButton.style.display = 'none';
+                    }
+                }
+            }
+        }, 2000);
+        
+        // Debug: Log PWA status
+        console.log('PWA Status - Installed:', isPWAInstalled(), 'Dismissed:', wasBannerDismissed());
+        </script>
+    </noscript>
+    
+    </div>
+    
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); z-index: 10000; animation: slideUp 0.3s ease-out;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="flex: 1; min-width: 200px;">
+                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">📱 Cài đặt ứng dụng</div>
+                <div style="font-size: 13px; opacity: 0.9;">Cài đặt để truy cập nhanh hơn và sử dụng offline</div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="pwa-install-btn" onclick="installPWA()" style="background: white; color: #667eea; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.2)';">
+                    Cài đặt ngay
+                </button>
+                <button onclick="dismissPWA()" style="background: transparent; color: white; border: 2px solid white; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)';" onmouseout="this.style.background='transparent';">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
